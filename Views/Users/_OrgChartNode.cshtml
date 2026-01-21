@@ -1,0 +1,25 @@
+﻿ @model List<UserRoles.ViewModels.OrgChartNodeViewModel>
+
+<ul class="org-level">
+    @foreach (var node in Model)
+    {
+        <li>
+            <div class="org-box @node.Role.ToLower()">
+                <div class="org-name">@node.Name</div>
+                <div class="org-role">@node.Role</div>
+            </div>
+
+            @{
+                var allNodes = ViewBag.AllNodes as List<UserRoles.ViewModels.OrgChartNodeViewModel>;
+                var children = allNodes?
+                .Where(x => x.ParentUserId == node.Id)
+                .ToList();
+            }
+
+            @if (children != null && children.Any())
+            {
+                @await Html.PartialAsync("_OrgChartNode", children)
+            }
+        </li>
+    }
+</ul>

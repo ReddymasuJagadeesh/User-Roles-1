@@ -1,0 +1,92 @@
+﻿@model UserRoles.ViewModels.PagedResult<(UserRoles.Models.Users User, string Role)>
+
+<div class="table-responsive">
+    <table class="table table-bordered table-hover align-middle">
+        <thead class="table-light">
+            <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th class="text-center">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.Items.Any())
+            {
+                foreach (var item in Model.Items)
+                {
+                    <tr>
+                        <td>@item.User.Name</td>
+                        <td>@item.User.Email</td>
+                        <td>@item.Role</td>
+                        <td class="text-center">
+
+                            <!-- EDIT -->
+                            <a asp-action="Index"
+                               asp-route-editId="@item.User.Id"
+                               class="btn btn-warning btn-sm me-1">
+                                Edit
+                            </a>
+
+                            <!-- DELETE -->
+                            @if (item.Role == "Manager")
+                            {
+                                <!-- Manager delete → popup only -->
+                                <button type="button"
+                                        class="btn btn-danger btn-sm"
+                                        onclick="openManagerDeleteModal('@item.User.Id', '@item.User.Name')">
+                                    Delete
+                                </button>
+                            }
+                            else
+                            {
+                                <!-- Normal user delete -->
+                                <form asp-action="Delete"
+                                      method="post"
+                                      class="d-inline">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@item.User.Id" />
+                                    <button type="submit"
+                                            class="btn btn-danger btn-sm"
+                                            onclick="return confirm('Are you sure you want to delete this user?');">
+                                        Delete
+                                    </button>
+                                </form>
+                            }
+
+                        </td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="4" class="text-center text-muted">
+                        No users found
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@if (Model.TotalPages > 1)
+{
+    <div class="d-flex justify-content-center gap-2 mt-3">
+        <a class="btn btn-outline-secondary btn-sm @(Model.Page == 1 ? "disabled" : "")"
+           asp-route-page="@(Model.Page - 1)"
+           asp-route-search="@ViewBag.Search">
+            ← Previous
+        </a>
+
+        <span class="fw-semibold">
+            Page @Model.Page of @Model.TotalPages
+        </span>
+
+        <a class="btn btn-outline-secondary btn-sm @(Model.Page == Model.TotalPages ? "disabled" : "")"
+           asp-route-page="@(Model.Page + 1)"
+           asp-route-search="@ViewBag.Search">
+            Next →
+        </a>
+    </div>
+}

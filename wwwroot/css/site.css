@@ -1,0 +1,657 @@
+﻿/* ================= BASE FONT ================= */
+html {
+    font-size: 14px;
+}
+
+@media (min-width: 768px) {
+    html {
+        font-size: 16px;
+    }
+}
+
+/* ================= FOCUS STYLES ================= */
+.btn:focus,
+.btn:active:focus,
+.btn-link.nav-link:focus,
+.form-control:focus,
+.form-check-input:focus {
+    box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+}
+
+/* ================= PAGE LAYOUT ================= */
+html {
+    position: relative;
+    min-height: 100%;
+}
+
+body {
+    margin-bottom: 60px;
+}
+
+/* ================= FORM FLOATING PLACEHOLDERS ================= */
+.form-floating > .form-control-plaintext::placeholder,
+.form-floating > .form-control::placeholder {
+    color: var(--bs-secondary-color);
+    text-align: end;
+}
+
+.form-floating > .form-control-plaintext:focus::placeholder,
+.form-floating > .form-control:focus::placeholder {
+    text-align: start;
+}
+
+/* ===================================================== */
+/* ================= FIXED POPUP / TOAST ================= */
+/* ===================================================== */
+
+/* Toast container (fixed – prevents table movement) */
+.toast-container-fixed {
+    position: fixed;
+    top: 80px; /* below navbar */
+    right: 20px;
+    z-index: 1050;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* Toast message box */
+.toast-message {
+    min-width: 320px;
+    max-width: 420px;
+    padding: 12px 16px;
+    border-radius: 6px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+    animation: toast-slide-in 0.4s ease-out;
+}
+
+    /* Smooth disappear */
+    .toast-message.fade {
+        opacity: 0;
+        transform: translateX(40px);
+        transition: opacity 0.4s ease, transform 0.4s ease;
+    }
+
+/* ================= TOAST ANIMATION ================= */
+@keyframes toast-slide-in {
+    from {
+        opacity: 0;
+        transform: translateX(40px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* ================= RESPONSIVE ================= */
+@media (max-width: 576px) {
+    .toast-container-fixed {
+        top: 70px;
+        right: 10px;
+        left: 10px;
+    }
+
+    .toast-message {
+        min-width: auto;
+        width: 100%;
+    }
+}
+
+/* keep table stable */
+.report-textarea {
+    resize: none;
+    overflow-y: auto;
+    width: 100%;
+}
+
+/* character counter */
+.char-counter {
+    font-size: 11px;
+    color: #6c757d;
+    text-align: right;
+    margin-top: 2px;
+}
+
+/* center alignment */
+.text-center-all th,
+.text-center-all td {
+    text-align: center;
+    vertical-align: middle;
+}
+.report-textarea {
+    resize: none;
+}
+
+.char-counter {
+    font-size: 11px;
+}
+
+.text-center-all th, .text-center-all td {
+    text-align: center;
+}
+
+/* ================= FIXED TEXTAREA (NO UI CHANGE) ================= */
+/* ================= STABLE TABLE ================= */
+.fixed-table {
+    table-layout: fixed; /* 🔒 prevents column resizing */
+    width: 100%;
+}
+
+    /* prevent cell content from expanding column */
+    .fixed-table td,
+    .fixed-table th {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+/* ================= TEXTAREA SAFETY ================= */
+.fixed-textarea {
+    width: 100%;
+    resize: none; /* user cannot resize */
+    box-sizing: border-box; /* width stays inside td */
+    overflow-wrap: break-word;
+    word-break: break-word;
+    white-space: pre-wrap;
+}
+/* ===== Manager Tree UI ===== */
+/* ===== Manager Filter UI ===== */
+
+.manager-tree {
+    padding-left: 0;
+}
+
+.manager-item {
+    margin-bottom: 6px;
+}
+
+/* Main links */
+.manager-link {
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 12px;
+    border-radius: 10px;
+    text-decoration: none;
+    color: #212529;
+    font-weight: 500;
+    transition: 0.2s;
+}
+
+    .manager-link:hover {
+        background-color: #eef5ff;
+    }
+
+    .manager-link.active {
+        background-color: #0d6efd;
+        color: #fff;
+    }
+
+        .manager-link.active i {
+            color: #fff;
+        }
+
+/* Toggle icon */
+.toggle-icon {
+    cursor: pointer;
+    font-size: 14px;
+    color: #6c757d;
+    width: 20px;
+}
+
+/* Sub managers */
+.sub-manager-tree {
+    margin-left: 28px;
+    margin-top: 6px;
+}
+
+.sub-manager-link {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 10px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-size: 14px;
+    color: #495057;
+}
+
+    .sub-manager-link:hover {
+        background-color: #f1f3f5;
+    }
+
+    .sub-manager-link.active {
+        background-color: #198754;
+        color: #fff;
+    }
+
+
+/* ===== Manager Filter Boxes ===== */
+
+.manager-box {
+    display: block;
+    padding: 10px 14px;
+    margin-bottom: 6px;
+    border-radius: 10px;
+    font-weight: 500;
+    text-decoration: none;
+    color: #212529;
+    background-color: #f8f9fa;
+    transition: all 0.2s ease-in-out;
+}
+
+    .manager-box i {
+        color: #0d6efd;
+    }
+
+    /* Hover */
+    .manager-box:hover {
+        background-color: #e7f1ff;
+        text-decoration: none;
+    }
+
+    /* Active (selected) */
+    .manager-box.active {
+        background-color: #0d6efd;
+        color: #fff;
+    }
+
+        .manager-box.active i {
+            color: #fff;
+        }
+
+/* Admin box */
+.admin-box {
+    background-color: #eaf2ff;
+    font-weight: 600;
+}
+
+/* Parent Manager */
+.manager-parent {
+    background-color: #eef7f1;
+}
+
+/* Child Manager */
+.manager-child {
+    margin-left: 28px;
+    background-color: #f9fdfb;
+    font-size: 14px;
+}
+
+/* ===== Viewing hierarchy badges ===== */
+.badge {
+    font-size: 0.9rem;
+}
+
+/* Sub-manager badge hover */
+.sub-manager-link:hover {
+    background-color: #ffc107 !important;
+    color: #212529 !important;
+}
+
+/* Active sub-manager */
+.sub-manager-link.active {
+    background-color: #fd7e14 !important;
+    color: #fff !important;
+}
+
+.manager-node {
+    margin-bottom: 4px;
+}
+
+.bg-warning {
+    padding: 0 2px;
+    border-radius: 3px;
+}
+
+
+.org-container {
+    padding: 20px;
+    overflow-x: auto;
+}
+
+.org-title {
+    text-align: center;
+    margin-bottom: 30px;
+    font-weight: 600;
+}
+
+.org-chart {
+    display: flex;
+    justify-content: center;
+}
+
+.org-level {
+    display: flex;
+    justify-content: center;
+    padding-top: 20px;
+    position: relative;
+}
+
+    .org-level::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 50%;
+        border-left: 2px solid #ccc;
+        height: 20px;
+    }
+
+    .org-level > li {
+        list-style: none;
+        text-align: center;
+        position: relative;
+        padding: 20px 10px 0 10px;
+    }
+
+        .org-level > li::before,
+        .org-level > li::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            border-top: 2px solid #ccc;
+            width: 50%;
+        }
+
+        .org-level > li::before {
+            left: 0;
+        }
+
+        .org-level > li::after {
+            right: 0;
+        }
+
+        .org-level > li:first-child::before,
+        .org-level > li:last-child::after {
+            border: none;
+        }
+
+.org-box {
+    background: #f5f5f5;
+    border-radius: 6px;
+    padding: 12px 18px;
+    min-width: 180px;
+    box-shadow: 0 2px 6px rgba(0,0,0,.15);
+    display: inline-block;
+}
+
+    .org-box.admin {
+        background: #263238;
+        color: #fff;
+    }
+
+    .org-box.manager {
+        background: #1976d2;
+        color: #fff;
+    }
+
+    .org-box.user {
+        background: #4caf50;
+        color: #fff;
+    }
+
+.org-name {
+    font-weight: 600;
+}
+
+.org-role {
+    font-size: 12px;
+    opacity: 0.9;
+}
+
+
+
+
+/* ================= TREE LAYOUT ================= */
+
+.org-layout {
+    display: grid;
+    grid-template-columns: 350px 1fr;
+    gap: 20px;
+}
+
+.org-left {
+    padding-right: 20px;
+    border-right: 1px solid #ddd;
+}
+
+.org-center {
+    padding: 20px;
+}
+
+/* MANAGER BLOCK */
+.tree-manager {
+    margin-bottom: 30px;
+}
+
+/* USERS MUST STACK VERTICALLY */
+.tree-users {
+    margin-left: 40px;
+    margin-top: 10px;
+    display: flex;
+    flex-direction: column; /* 🔴 VERY IMPORTANT */
+    gap: 10px;
+}
+
+/* DRAG RULES */
+.manager {
+    cursor: default;
+}
+
+.user {
+    cursor: grab;
+}
+
+
+
+
+.tree-root ul {
+    list-style: none;
+    padding-left: 20px;
+}
+
+.node {
+    padding: 6px 10px;
+    margin: 4px 0;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+    .node.admin {
+        background: #1e293b;
+        color: white;
+    }
+
+    .node.manager {
+        background: #2563eb;
+        color: white;
+    }
+
+    .node.user {
+        background: #22c55e;
+        color: white;
+    }
+
+    .node.selected {
+        outline: 3px solid orange;
+    }
+
+.tree, .tree ul {
+    list-style: none;
+    padding-left: 20px;
+}
+
+.tree-node {
+    margin: 6px 0;
+    cursor: pointer;
+}
+
+    .tree-node span:hover {
+        background: #f0f0f0;
+    }
+
+.tree-sub-managers {
+    margin-left: 25px;
+    border-left: 2px dashed #d0d0d0;
+    padding-left: 15px;
+}
+
+
+
+/* ===============================
+   FORCE FULL SCREEN ORG LAYOUT
+================================ */
+
+/* Root wrapper must span screen */
+.org-wrapper-full {
+    width: 100vw;
+    height: calc(100vh - 56px); /* navbar height */
+    overflow: hidden;
+}
+
+/* Main flex layout */
+.org-layout-full {
+    display: flex;
+    width: 100%;
+    height: 100%;
+}
+
+/* LEFT PANEL (Org Chart) */
+.org-left-panel {
+    width: 20vw; /* 👈 LEFT takes 35% of screen */
+    min-width: 350px;
+    max-width: 520px;
+    height: 100%;
+    overflow-y: auto;
+    padding: 20px;
+    border-right: 1px solid #ddd;
+    background: #fff;
+}
+
+/* RIGHT PANEL (Reports / Details) */
+.org-right-panel {
+    flex: 1; /* 👈 TAKES ALL REMAINING SPACE */
+    height: 100%;
+    overflow-y: auto;
+    padding: 30px 40px;
+    background: #fff;
+}
+
+    /* Make tables stretch */
+    .org-right-panel table {
+        width: 100%;
+    }
+
+/* Remove Bootstrap interference */
+.container,
+.container-lg,
+.container-xl {
+    max-width: none !important;
+}
+
+
+/* =========================================
+   REPORTS TABLE COLUMN WIDTH CONTROL
+========================================= */
+
+/* Prevent browser auto-resizing */
+.org-right-panel table {
+    table-layout: fixed;
+    width: 100%;
+}
+
+/* DATE */
+.col-date {
+    width: 95px;
+    white-space: nowrap;
+}
+
+/* TASK (REDUCED) */
+.col-task {
+    width: 25%;
+    white-space: normal;
+    word-break: break-word;
+}
+
+/* NOTE (REDUCED) */
+.col-note {
+    width: 20%;
+    white-space: normal;
+    word-break: break-word;
+}
+
+/* REVIEWER COMMENT (INCREASED) */
+.col-review {
+    width: 35%;
+    white-space: normal;
+    word-break: break-word;
+}       
+
+/* SMALL META COLUMNS
+   -- Reduced widths to make the whole table narrower.
+   -- Use px widths so layout is stable across viewport sizes. */
+.col-reported {
+    width: 70px;   /* was 100px */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-align: center;
+}
+
+.col-submitted {
+    width: 80px;   /* was 120px */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-align: center;
+}
+
+.report-text {
+    max-width: 220px;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+/* ================= ROW ACTIONS (hover reveal) =================
+   Make the edit/delete/details controls appear to the right of the
+   "Submitted By" column when the mouse is over the report row.
+   This mirrors the node/action behaviour used elsewhere in the app. */
+.report-row {
+    position: relative;
+}
+
+/* Container anchored to the right of the Submitted column */
+.row-actions {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .12s ease-in-out;
+    display: inline-flex;
+    gap: .35rem;
+    z-index: 20;
+}
+
+/*.report-row:hover .row-actions {
+    opacity: 1;
+    pointer-events: auto;
+}*/
+
+.row-actions .btn {
+    padding: .275rem .5rem;
+    font-size: .82rem;
+}
+
+/* Small cell that holds submitted content + actions must allow overflow */
+/*.actions-cell {
+    position: relative;
+    overflow: visible;*/ /* allow the absolute row-actions to be visible */
+    /*padding-right: 2.25rem;*/ /* leave space for the buttons */
+/*}*/
+
+/* Disable hover highlight for submit row */
+/*.table-success:hover {
+    background-color: #cfe5da !important;
+}*/

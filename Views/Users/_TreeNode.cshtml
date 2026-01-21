@@ -1,0 +1,108 @@
+﻿@model UserRoles.Models.Users
+@using UserRoles.Models
+
+@{
+    var currentRole = (ViewBag.CurrentRole as string) ?? "User";
+}
+
+<div class="tree-node org-branch">
+
+    <!-- ================= SUB MANAGER NODE ================= -->
+    <div class="org-box manager org-node clickable-node"
+         data-id="@Model.Id"
+         data-role="SubManager"
+         @(currentRole == "Admin" ? "draggable=\"true\" ondragstart=\"drag(event)\"" : "")
+         @(currentRole == "Admin" ? $"ondragover=\"allowDrop(event)\" ondrop=\"drop(event,'{Model.Id}')\"" : "")>          
+
+        <!-- ACTION ICONS (EDIT / DELETE / REPORTS) -->
+        <div class="node-actions-top above-name">
+            @if (currentRole == "Admin" || currentRole == "Manager")
+            {
+                <a onclick="openEditModal('@Model.Id','@Model.Name','@Model.Email','SubManager')">✏️</a>
+            }
+            @if (currentRole == "Admin")
+            {
+                <a onclick="openDeleteModal('@Model.Id','@Model.Name','SubManager')">🗑</a>
+            }
+
+            @if (currentRole == "Admin" || currentRole == "Manager")
+            {
+                <a href="javascript:void(0)"
+                   onclick="loadReports('@Model.Id')">📊</a>
+            }
+        </div>
+
+        <!-- NAME + PLUS (SAME ROW AS MANAGER) -->
+        <div class="manager-header">
+
+            <div class="manager-text">
+                <div class="node-title">@Model.Name</div>
+                <div class="role">Sub Manager</div>
+            </div>
+
+            <!-- ➕ ADD USER / SUB MANAGER (admin only) -->
+            @if (currentRole == "Admin")
+            {
+                <a class="org-plus"
+                   title="Add User or Manager"
+                   onclick="openAddModal('User','@Model.Id')">
+                    +
+                </a>
+            }
+        </div>
+    </div>
+
+    <!-- ================= CHILDREN ================= -->
+    <div class="tree-children">
+
+        <!-- 👤 USERS UNDER SUB MANAGER -->
+        @if (ViewBag.SubManagerUsers is Dictionary<string, List<Users>> smUsers
+                && smUsers.ContainsKey(Model.Id))
+        {
+            <div class="tree-users">
+                @foreach (var user in smUsers[Model.Id])
+                {
+                    <div class="org-box user org-node xsmall"
+                         data-id="@user.Id"
+                         data-role="User"
+                         @(currentRole == "Admin" ? "draggable=\"true\" ondragstart=\"drag(event)\"" : "")>
+
+                        <!-- USER ACTION ICONS -->
+                        <div class="node-actions-top above-name">
+                            @if (currentRole == "Admin" || currentRole == "Manager")
+                            {
+                                <a onclick="openEditModal('@user.Id','@user.Name','@user.Email','User')">✏️</a>
+                            }
+
+                            @if (currentRole == "Admin")
+                            {
+                                <a onclick="openDeleteModal('@user.Id','@user.Name','User')">🗑</a>
+                            }
+
+                            @if (currentRole == "Admin" || currentRole == "Manager")
+                            {
+                                <a href="javascript:void(0)"
+                                   onclick="loadReports('@user.Id')">📊</a>
+                            }
+                        </div>
+
+                        <div class="node-title">@user.Name</div>
+                    </div>
+                }
+            </div>
+        }
+
+        <!-- 🔁 NESTED SUB MANAGERS (RECURSIVE) -->
+        @if (ViewBag.SubManagers is Dictionary<string, List<Users>> subManagers
+                && subManagers.ContainsKey(Model.Id))
+        {
+            <div class="tree-sub-managers">
+                @foreach (var sub in subManagers[Model.Id])
+                {
+                    @Html.Partial("_TreeNode", sub)
+                }
+            </div>
+        }
+
+    </div>
+</div>

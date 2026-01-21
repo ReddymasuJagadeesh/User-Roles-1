@@ -1,0 +1,51 @@
+﻿@model UserRoles.ViewModels.OrgTreeNodeViewModel
+
+@{
+    var currentRole = (ViewBag.CurrentRole as string) ?? "User";
+}
+
+<!-- ================= ORG NODE ================= -->
+<div class="org-box org-node xsmall"
+     data-id="@Model.User.Id">
+
+       <!-- ACTION ICONS (admin & manager differences) -->
+    <div class="node-actions-top above-name">
+        @if (currentRole == "Admin")
+        {
+            <a onclick="openEditModal(
+                '@Model.User.Id',
+                '@Model.User.Name',
+                '@Model.User.Email',
+                'User')">✏️</a>
+
+            <a onclick="openDeleteModal(
+                '@Model.User.Id',
+                '@Model.User.Name',
+                'User')">🗑</a>
+        }
+
+        @if (currentRole == "Admin" || currentRole == "Manager")
+        {
+            <a href="@Url.Action(
+                           "UserReports",
+                           "Reports",
+                           new { userId = Model.User.Id })">📊</a>
+        }
+    </div>
+
+    <!-- NAME -->
+    <div class="node-title">
+        @Model.User.Name
+    </div>
+</div>
+
+<!-- ================= CHILDREN ================= -->
+@if (Model.Children.Any())
+{
+    <div class="org-children">
+        @foreach (var child in Model.Children)
+        {
+            @Html.Partial("_OrgTreeNode", child)
+        }
+    </div>
+}

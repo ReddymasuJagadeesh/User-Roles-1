@@ -1,0 +1,90 @@
+﻿@model IEnumerable<UserRoles.Models.Users>
+
+@{
+    ViewData["Title"] = "Managers";
+    string editId = ViewBag.EditId as string;
+}
+
+<h3>Managers</h3>
+
+<table class="table table-bordered table-hover align-middle">
+    <thead class="table-light">
+        <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th style="width:420px;" class="text-center">Actions</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        @foreach (var manager in Model)
+        {
+            bool isEditing = editId == manager.Id;
+
+            <tr>
+                @if (isEditing)
+                {
+                    <!-- EDIT MODE -->
+                    <form asp-action="UpdateManager" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@manager.Id" />
+
+                    <td>
+                        <input name="name"
+                               value="@manager.Name"
+                               class="form-control form-control-sm"
+                               required />
+                    </td>
+
+                    <td>
+                        <input name="email"
+                               value="@manager.Email"
+                               class="form-control form-control-sm"
+                               required />
+                    </td>
+
+                    <td class="text-center">
+                        <button class="btn btn-success btn-sm">Save</button>
+                        <a asp-action="Managers" class="btn btn-secondary btn-sm ms-1">
+                            Cancel
+                        </a>
+                    </td>
+                    </form>
+                }
+                else
+                {
+                    <!-- READ MODE -->
+                    <td>@manager.Name</td>
+                    <td>@manager.Email</td>
+
+                    <td class="text-center">
+                        <div class="d-inline-flex gap-2">
+
+                            <!-- VIEW USERS -->
+                            <a asp-action="Index"
+                               asp-route-managerId="@manager.Id"
+                               class="btn btn-primary btn-sm">
+                                View Users
+                            </a>
+
+                            <!-- EDIT -->
+                            <a asp-action="Managers"
+                               asp-route-editId="@manager.Id"
+                               class="btn btn-warning btn-sm">
+                                Edit
+                            </a>
+
+                            <!-- DELETE -->
+                            <a asp-action="ConfirmDeleteManager"
+                               asp-route-managerId="@manager.Id"
+                               class="btn btn-danger btn-sm">
+                                Delete
+                            </a>
+
+                        </div>
+                    </td>
+                }
+            </tr>
+        }
+    </tbody>
+</table>

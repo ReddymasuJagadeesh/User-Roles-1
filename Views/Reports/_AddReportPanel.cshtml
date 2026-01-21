@@ -1,0 +1,150 @@
+﻿@model UserRoles.ViewModels.AddReportPanelViewModel
+
+<div id="addReportFormContainer" class="card mt-3">
+    <div class="card-body">
+
+        <!-- ================= SECURITY ================= -->
+        @Html.AntiForgeryToken()
+
+        <!-- ================= REQUIRED HIDDEN ================= -->
+        <input type="hidden" id="targetUserId" name="targetUserId" value="@Model.TargetUserId" />
+        <input type="hidden" id="reportDate" name="date" value="@Model.Date" />
+
+        <!-- ================= DATE (TEXT ONLY) ================= -->
+        <div class="mb-2">
+            <label class="form-label fw-semibold">Date</label>
+            <div class="form-control-plaintext">@Model.Date</div>
+        </div>
+
+        <!-- ================= TASK ================= -->
+        <div class="mb-2">
+            <label class="form-label">Task</label>
+            <textarea id="taskInput"
+                      name="task"
+                      class="form-control char-limit"
+                      rows="2"
+                      maxlength="100"
+                      data-counter="taskCounter"
+                      required></textarea>
+            <small id="taskCounter" class="text-muted">
+                100 characters remaining
+            </small>
+        </div>
+
+        <!-- ================= NOTE ================= -->
+        <div class="mb-2">
+            <label class="form-label">Note</label>
+            <textarea id="noteInput"
+                      name="note"
+                      class="form-control char-limit"
+                      rows="2"
+                      maxlength="100"
+                      data-counter="noteCounter"
+                      required></textarea>
+            <small id="noteCounter" class="text-muted">
+                100 characters remaining
+            </small>
+        </div>
+
+        <!-- ================= REPORTED TO ================= -->
+        <div class="mb-3">
+            <label class="form-label">Reported To</label><br />
+            <label>
+                <input type="checkbox" name="reportedTo" value="Admin" checked /> Admin
+            </label>
+            <label class="ms-3">
+                <input type="checkbox" name="reportedTo" value="Manager" /> Manager
+            </label>
+        </div>
+
+        <!-- ================= ACTIONS ================= -->
+        <button type="button"
+                class="btn btn-success"
+                id="submitReportBtn">
+            Submit Report
+        </button>
+
+        <button type="button"
+                class="btn btn-secondary ms-2"
+                onclick="loadReports('@Model.TargetUserId')">
+            Cancel
+        </button>
+
+    </div>
+</div>
+
+<!-- ================= CHARACTER COUNTER ================= -->
+<script>
+    document.addEventListener("input", function (e) {
+
+        if (!e.target.classList.contains("char-limit")) return;
+
+        const counter = document.getElementById(e.target.dataset.counter);
+        if (!counter) return;
+
+        counter.textContent =
+            (100 - e.target.value.length) + " characters remaining";
+    });
+</script>
+
+<!-- ================= SUBMIT REPORT (AJAX ONLY) ================= -->
+<script>
+    (async function () {
+
+        const btn = document.getElementById("submitReportBtn");
+        if (!btn) return;
+
+        btn.addEventListener("click", async function () {
+
+            const container = document.getElementById("addReportFormContainer");
+
+            const userId = container.querySelector('input[name="targetUserId"]').value;
+            const date   = container.querySelector('input[name="date"]').value;
+            const task   = container.querySelector('textarea[name="task"]').value.trim();
+            const note   = container.querySelector('textarea[name="note"]').value.trim();
+
+            const reportedTo = Array.from(
+                container.querySelectorAll('input[name="reportedTo"]:checked')
+            ).map(x => x.value);
+
+            if (!date || !task || !note || reportedTo.length === 0) {
+                alert("Please fill all fields");
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append("targetUserId", userId);
+            formData.append("date", date);
+            formData.append("task", task);
+            formData.append("note", note);
+            reportedTo.forEach(r => formData.append("reportedTo", r));
+
+            // append antiforgery token if present (safe)
+            const tokenInput = container.querySelector('input[name="__RequestVerificationToken"]') 
+                               || document.querySelector('input[name="__RequestVerificationToken"]');
+            if (tokenInput) {
+                formData.append("__RequestVerificationToken", tokenInput.value);
+            }
+
+            const res = await fetch("/Reports/CreateInline", {
+                method: "POST",
+                body: formData,
+                credentials: "same-origin"
+            });
+
+            const text = await res.text();
+
+            // Show server-sent error message when possible
+            if (!res.ok) {
+                alert(text || "Failed to submit report");
+                return;
+            }
+
+            // SUCCESS
+            if (typeof loadReports === "function") {
+                loadReports(userId);
+            }
+        });
+
+    })();
+</script>       

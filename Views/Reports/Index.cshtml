@@ -1,0 +1,232 @@
+﻿@using System.Security.Claims
+@model IEnumerable<UserRoles.ViewModels.ReportViewModel>
+
+@{
+    ViewData["Title"] = "Reports Dashboard";
+
+    bool isManagerOrAdmin = User.IsInRole("Manager") || User.IsInRole("Admin");
+    bool isUser = User.IsInRole("User");
+
+    bool hasToday = ViewBag.HasToday ?? false;
+    DateTime today = ViewBag.Today ?? DateTime.Today;
+
+    DateTime? addDate = ViewBag.AddDate as DateTime?;
+    string targetUserId = ViewBag.TargetUserId as string;
+}
+<!-- ✅ ADD CONTAINER -->
+<div class="container-xl">
+        <h2 class="mt-3">Reports Dashboard</h2>
+
+        <!-- ===================== ALERTS ===================== -->
+        <div id="alerts-container">
+            @if (TempData["Success"] != null)
+            {
+                <div class="alert alert-success auto-dismiss" data-timeout="5000">
+                    @TempData["Success"]
+                </div>
+            }
+
+            @if (TempData["Error"] != null)
+            {
+                <div class="alert alert-danger auto-dismiss" data-timeout="7000">
+                    @TempData["Error"]
+                </div>
+            }
+        </div>
+
+        <!-- ===================== CALENDAR PICK (ADMIN / MANAGER) ===================== -->
+        @if (isManagerOrAdmin)
+        {
+            <form asp-action="PickDateInline" method="post" class="card mb-3 p-3 shadow-sm">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="userId" value="@targetUserId" />
+
+                <div class="row g-2 align-items-end">
+                    <div class="col-md-4">
+                        <label class="form-label">Add Report Using Calendar</label>
+                        <input type="date"
+                               name="selectedDate"
+                               max="@DateTime.Today.ToString("yyyy-MM-dd")"
+                               required />
+
+                    </div>
+
+                    <div class="col-md-3">
+                        <button type="submit" class="btn btn-primary w-100">
+                            Add Report
+                        </button>
+                    </div>
+                </div>
+            </form>
+        }
+
+        <table class="table table-striped table-bordered mt-3 align-middle">
+        <thead>
+            <tr>
+                <th>S.No</th>
+                <th>Date</th>
+                <th>Task</th>
+                <th>Note</th>
+                <th>Reviewer Comment</th>
+                <th>Reported To</th>
+                <th>Submitted By</th>
+                <th>Action</th>
+
+                @if (isUser)
+                {
+                    <th>Action</th>
+                }
+
+                
+            </tr>
+        </thead>
+
+
+            <tbody>
+
+                <!-- ===================== INLINE ADD (TODAY OR CALENDAR DATE) ===================== -->
+            @if ((!hasToday && isUser) || addDate != null)
+            {
+                DateTime inlineDate = addDate ?? today;
+
+                <form asp-action="CreateInline" method="post">
+                    @Html.AntiForgeryToken()
+
+                    <input type="hidden" name="date" value="@inlineDate.ToString("yyyy-MM-dd")" />
+                    <input type="hidden" name="targetUserId" value="@targetUserId" />
+
+                <tr class="table-success">
+                    <td>—</td>
+
+                    <td>
+                        @inlineDate.ToString("yyyy-MM-dd")
+                        @if (inlineDate == today)
+                        {
+                            <span class="badge bg-success ms-1">Today</span>
+                        }
+                    </td>
+
+                    <td>
+                        <textarea name="task" class="form-control" rows="2" required></textarea>
+                    </td>
+
+                    <td>
+                        <textarea name="note" class="form-control" rows="2" required></textarea>
+                    </td>
+
+                    <td>—</td>
+
+                    <td>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="reportedTo" value="Manager" checked />
+                            <label class="form-check-label">Manager</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="reportedTo" value="Admin" />
+                            <label class="form-check-label">Admin</label>
+                        </div>
+                    </td>
+
+                    <!-- Submitted By -->
+                    <td>User</td>
+
+                    <!-- Action column -->
+                    @if (isUser)
+                    {
+                        <td class="text-center">
+                            <button type="submit" class="btn btn-sm btn-success me-2">
+                                Submit
+                            </button>
+                            <a asp-action="Index" class="btn btn-sm btn-secondary">
+                                Cancel
+                            </a>
+                        </td>
+                    }
+
+                    <!-- Actions column -->
+                    @* <td>—</td> *@
+                </tr>
+                </form>
+            }
+
+
+                <!-- ===================== EXISTING REPORTS ===================== -->
+                @if (!Model.Any())
+                {
+                    <tr>
+                        <td colspan="8" class="text-center">
+                            No reports found.
+                        </td>
+                    </tr>
+                }
+                else
+                {
+                    int index = 0;
+
+                    foreach (var item in Model)
+                    {
+                        index++;
+
+                        <tr>
+                            <td>@index</td>
+
+                            <td>
+                                @item.Date.ToString("yyyy-MM-dd")
+                            </td>
+
+                            <td style="min-width:220px;">
+                                @item.Task
+                            </td>
+
+                            <td style="min-width:260px; word-break:break-word;">
+                                @item.Note
+                            </td>
+
+                            <td style="min-width:220px;">
+                                @item.ReviewerComment ?? "—"
+                            </td>
+
+                            <td>
+                                @if (item.ReportedTo.Contains("Manager"))
+                                {
+                                    <span class="badge bg-primary">Manager</span>
+                                }
+                                @if (item.ReportedTo.Contains("Admin"))
+                                {
+                                    <span class="badge bg-warning text-dark ms-1">Admin</span>
+                                }
+                            </td>
+
+                           <td>
+                                <span class="badge bg-info">
+                                    @item.SubmittedByRole
+                                </span>
+                            </td>
+
+                            <td class="text-center">
+                                <a asp-action="Details"
+                                   asp-route-id="@item.Id"
+                                   class="btn btn-sm btn-outline-info">
+                                    Details
+                                </a>
+                            </td>
+
+
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+</div> <!-- ✅ END CONTAINER -->
+@section Scripts {
+    <script>
+        // Auto-dismiss alerts
+        document.querySelectorAll('.auto-dismiss').forEach(alert => {
+            const timeout = parseInt(alert.dataset.timeout || 5000);
+            setTimeout(() => {
+                alert.classList.add('fade');
+                setTimeout(() => alert.remove(), 800);
+            }, timeout);
+        });
+    </script>
+}

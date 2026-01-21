@@ -1,0 +1,29 @@
+﻿@model IEnumerable<UserRoles.Models.AssignedTask>
+
+<h3>Assigned Tasks</h3>
+
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Task</th>
+            <th>Priority</th>
+            <th>Assigned By</th>
+            <th>Created At</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var t in Model)
+        {
+            <tr>
+                <td>@t.Title</td>
+                <td>
+                    <span class="badge bg-@(t.Priority == "High" ? "danger" : t.Priority == "Medium" ? "warning" : "secondary")">
+                        @t.Priority
+                    </span>
+                </td>
+                <td>@t.AssignedBy?.Name</td>
+                <td>@t.CreatedAt.ToLocalTime().ToString("dd-MM-yyyy HH:mm")</td>
+            </tr>
+        }
+    </tbody>
+</table>

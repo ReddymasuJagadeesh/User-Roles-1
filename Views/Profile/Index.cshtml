@@ -1,0 +1,83 @@
+﻿@model UserRoles.ViewModels.ProfileViewModel
+
+@{
+    ViewData["Title"] = "My Profile";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-6">
+
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">👤 My Profile</h5>
+            </div>
+
+            <div class="card-body">
+
+                @if (TempData["Success"] != null)
+                {
+                    <div class="alert alert-success">
+                        @TempData["Success"]
+                    </div>
+                }
+
+                <!-- ================= VIEW MODE ================= -->
+                @if (!Model.IsEditMode)
+                {
+                    <dl class="row">
+                        <dt class="col-sm-4">Name</dt>
+                        <dd class="col-sm-8">@Model.FirstName</dd>
+
+                        <dt class="col-sm-4">Email</dt>
+                        <dd class="col-sm-8">@Model.Email</dd>
+
+                        <dt class="col-sm-4">Mobile</dt>
+                        <dd class="col-sm-8">@Model.MobileNumber</dd>
+                    </dl>
+
+                    <a asp-action="Edit" class="btn btn-primary">
+                        Edit Profile
+                    </a>
+                }
+                else
+                {
+                    <!-- ================= EDIT MODE ================= -->
+                    <form asp-action="Save" method="post">
+                        @Html.AntiForgeryToken()
+
+                        <div class="mb-3">
+                            <label asp-for="FirstName" class="form-label"></label>
+                            <input asp-for="FirstName" class="form-control" />
+                            <span asp-validation-for="FirstName" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Email" class="form-label"></label>
+                            <input asp-for="Email" class="form-control" readonly />
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="MobileNumber" class="form-label"></label>
+                            <input asp-for="MobileNumber" class="form-control" />
+                            <span asp-validation-for="MobileNumber" class="text-danger"></span>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-success">
+                                Save Changes
+                            </button>
+
+                            <a asp-action="Index" class="btn btn-secondary">
+                                Cancel
+                            </a>
+                        </div>
+                    </form>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

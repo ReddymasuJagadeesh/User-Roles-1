@@ -1,0 +1,21 @@
+﻿@model UserRoles.ViewModels.OrgNodeViewModel
+
+<li draggable="@(Model.Role == "User")"
+    data-id="@Model.Id"
+    data-role="@Model.Role"
+    class="tree-node">
+
+    <span onclick="selectNode('@Model.Id')">
+        <strong>@Model.Name</strong> (@Model.Role)
+    </span>
+
+    @if (Model.Children.Any())
+    {
+        <ul>
+            @foreach (var child in Model.Children)
+            {
+                @Html.Partial("_OrgNode", child)
+            }
+        </ul>
+    }
+</li>

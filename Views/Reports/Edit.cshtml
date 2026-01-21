@@ -1,0 +1,80 @@
+﻿@model UserRoles.Models.DailyReport
+
+@{
+    ViewData["Title"] = "Edit Report";
+    bool isAdminOrManager = User.IsInRole("Admin") || User.IsInRole("Manager");
+}
+
+<h3 class="mb-3">Edit Report</h3>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+
+        <form asp-action="Edit" method="post">
+            @Html.AntiForgeryToken()
+
+            <!-- Hidden fields -->
+            <input type="hidden" asp-for="Id" />
+            <input type="hidden" asp-for="ApplicationUserId" />
+
+            <!-- Date (read-only) -->
+            <div class="mb-3">
+                <label class="form-label">Date</label>
+                <input class="form-control"
+                       value="@Model.Date.ToString("dd/MM/yyyy")"
+                       readonly />
+            </div>
+
+            <!-- Task -->
+            <div class="mb-3">
+                <label asp-for="Task" class="form-label"></label>
+                <input asp-for="Task"
+                       class="form-control"
+                       required />
+            </div>
+
+            <!-- Note -->
+            <div class="mb-3">
+                <label asp-for="Note" class="form-label"></label>
+                <textarea asp-for="Note"
+                          class="form-control"
+                          rows="4"
+                          required></textarea>
+            </div>
+
+            <!-- Reviewer Comment (ADMIN / MANAGER ONLY) -->
+            @if (isAdminOrManager)
+            {
+                <div class="mb-4">
+                    <label asp-for="ReviewerComment" class="form-label">
+                        Reviewer Comment
+                    </label>
+                    <textarea asp-for="ReviewerComment"
+                              class="form-control"
+                              rows="4"
+                              placeholder="Add comment for the user..."></textarea>
+                </div>
+            }
+
+            <!-- Action buttons -->
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-success">
+                    Save Changes
+                </button>
+
+                <a asp-action="UserReports"
+                   asp-route-userId="@Model.ApplicationUserId"
+                   class="btn btn-secondary">
+                    Cancel
+                </a>
+
+                <a asp-action="UserReports"
+                   asp-route-userId="@Model.ApplicationUserId"
+                   class="btn btn-outline-dark ms-auto">
+                    ← Back to Reports
+                </a>
+            </div>
+        </form>
+
+    </div>
+</div>

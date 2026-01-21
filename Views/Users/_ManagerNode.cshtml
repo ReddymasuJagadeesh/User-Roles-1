@@ -1,0 +1,52 @@
+﻿@model (UserRoles.Models.Users Manager, List<UserRoles.Models.Users> AllManagers)
+
+@{
+    var manager = Model.Manager;
+    var allManagers = Model.AllManagers;
+
+    var children = allManagers
+        .Where(m => m.ParentUserId == manager.Id)
+        .ToList();
+
+    string collapseId = $"mgr-{manager.Id}";
+}
+
+<div class="manager-node">
+
+    <div class="d-flex align-items-center gap-2">
+
+        @if (children.Any())
+        {
+            <button class="btn btn-sm btn-light"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#@collapseId">
+                <i class="bi bi-chevron-right"></i>
+            </button>
+        }
+        else
+        {
+            <span style="width:32px;"></span>
+        }
+
+        <a asp-action="Index"
+           asp-route-managerId="@manager.Id"
+           class="btn btn-outline-secondary btn-sm flex-grow-1 text-start">
+            <i class="bi bi-person-badge-fill text-success me-1"></i>
+            @manager.Name
+        </a>
+    </div>
+
+    @if (children.Any())
+    {
+        <div class="collapse ms-4 mt-1" id="@collapseId">
+            @foreach (var child in children)
+            {
+                @await Html.PartialAsync(
+                "_ManagerNode",
+                (child, allManagers)
+                )
+                }
+        </div>
+    }
+
+</div>

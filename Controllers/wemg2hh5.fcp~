@@ -1,0 +1,59 @@
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using UserRoles.Data;
+using UserRoles.Models;
+
+[Authorize(Roles = "Admin,Manager")]
+public class TasksController : Controller
+{
+    private readonly AppDbContext _context;
+    private readonly UserManager<Users> _userManager;
+
+    public TasksController(AppDbContext context, UserManager<Users> userManager)
+    {
+        _context = context;
+        _userManager = userManager;
+    }
+
+    // GET: Assign Task
+    public async Task<IActionResult> Create()
+    {
+        var users = await _userManager.Users.ToListAsync();
+        ViewBag.Users = users;
+        return View();
+    }
+
+    // POST: Assign Task
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Create(string title, string priority, string assignedToId)
+    {
+        var assignedBy = await _userManager.GetUserAsync(User);
+
+        if (assignedBy == null) return Unauthorized();
+
+        // ❗ Manager can assign only to User
+        if (User.IsInRole("Manager"))
+        {
+            var targetUser = await _userManager.FindByIdAsync(assignedToId);
+            if (!await _userManager.IsInRoleAsync(targetUser, "User"))
+                return Forbid();
+        }
+
+        var task = new AssignedTask
+        {
+            Title = title,
+            Priority = priority,
+            AssignedById = assignedBy.Id,
+            AssignedToId = assignedToId
+        };
+
+        _context.AssignedTasks.Add(task);
+        await _context.SaveChangesAsync();
+
+        TempData["Success"] = "Task assigned successfully";
+        return RedirectToAction("Create");
+    }
+}

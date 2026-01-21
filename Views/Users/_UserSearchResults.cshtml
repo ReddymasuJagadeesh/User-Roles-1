@@ -1,0 +1,43 @@
+﻿@model List<(UserRoles.Models.Users User, string Role)>
+
+@if (!Model.Any())
+{
+    <tr>
+        <td colspan="4" class="text-center text-muted">
+            No results found
+        </td>
+    </tr>
+}
+else
+{
+    foreach (var item in Model)
+    {
+        <tr>
+            <td class="highlight">@item.User.Name</td>
+            <td class="highlight">@item.User.Email</td>
+            <td class="highlight">@item.Role</td>
+
+            <td class="text-center">
+                <div class="d-inline-flex gap-2">
+
+                    <a asp-controller="Reports"
+                       asp-action="UserReports"
+                       asp-route-userId="@item.User.Id"
+                       class="btn btn-primary btn-sm">
+                        View Reports
+                    </a>
+
+                    @if (item.Role == "Manager")
+                    {
+                        <a asp-action="Index"
+                           asp-route-managerId="@item.User.Id"
+                           class="btn btn-primary btn-sm">
+                            Users
+                        </a>
+                    }
+
+                </div>
+            </td>
+        </tr>
+    }
+}

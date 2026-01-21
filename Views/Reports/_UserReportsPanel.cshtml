@@ -1,0 +1,296 @@
+﻿@using System.Security.Claims
+@model UserRoles.ViewModels.PagedResult<UserRoles.Models.DailyReport>
+
+@{
+    Layout = null;
+
+    DateTime today = ViewBag.Today ?? DateTime.Today;
+    bool hasToday = ViewBag.HasToday ?? false;
+
+    bool isUser = User.IsInRole("User");
+    bool isManager = User.IsInRole("Manager");
+    bool isAdmin = User.IsInRole("Admin");
+
+    string currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+    string targetUserId = ViewBag.TargetUserId as string;
+    string addDate = ViewBag.AddDate as string;
+
+    bool showAddReportForOthers =
+        (isManager || isAdmin) && targetUserId != currentUserId;
+}
+
+<!-- Local CSS to ensure hover actions work in the injected panel -->
+<style>
+    .report-row { position: relative; }
+    .actions-cell { position: relative; overflow: visible; padding-right: .5rem; }
+
+    .actions-cell {
+        text-align: center;
+    }
+
+    .row-actions {
+        display: inline-flex;
+        gap: .6rem;
+    }
+
+        .row-actions a {
+            font-size: 1.1rem;
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+    
+    .row-actions .btn { padding: .275rem .5rem; font-size: .82rem; }
+</style>
+
+<!-- ================= HEADER ================= -->
+<h5 class="mb-3">
+    <strong>@ViewBag.ReportOwnerName</strong> Reports
+</h5>
+
+<!-- ================= ADD REPORT ================= -->
+@if (showAddReportForOthers)
+{
+    <div class="card mb-3 shadow-sm">
+        <div class="card-body py-3">
+
+            <h6 class="mb-3">➕ Add Report</h6>
+
+            <div class="d-flex align-items-center gap-2 mb-3">
+                <input type="date"
+                       id="addReportDate"
+                       class="form-control"
+                       style="max-width: 200px"
+                       max="@DateTime.Today.ToString("yyyy-MM-dd")" />
+
+                <button type="button"
+                        class="btn btn-primary"
+                        onclick="showInlineAddReport('@targetUserId')">
+                    + Add Report
+                </button>
+            </div>
+
+            <!-- ONLY CONTAINER -->
+            <div id="inlineAddReportContainer" class="d-none"></div>
+
+        </div>
+    </div>
+}
+
+<!-- ================= SUMMARY ================= -->
+<div class="d-flex justify-content-between align-items-center mb-2">
+    <div class="text-muted">
+        Total Reports: <strong>@Model.TotalItems</strong>
+    </div>
+    <span class="text-muted">
+        Showing @Model.Items.Count of @Model.TotalItems reports
+    </span>
+
+
+
+
+    @if (User.IsInRole("Admin") || User.IsInRole("Manager"))
+    {
+        <a class="btn btn-outline-danger btn-sm"
+           href="@Url.Action("DownloadPdf", "Reports", new { userId = ViewBag.TargetUserId })">
+            ⬇ Download PDF
+        </a>
+    }
+</div>
+
+<!-- ================= REPORTS TABLE ================= -->
+<div class="table-responsive">
+    <table class="table table-bordered table-hover align-middle">
+        <thead class="table-light text-center">
+            <tr>
+                <th>Date</th>
+                <th>Task</th>
+                <th>Note</th>
+                <th>Reviewer Comment</th>
+                <th>Reported To</th>
+                <th>Submitted By</th>
+                <th>Actions</th>  @* New explicit actions column *@
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.Items.Any())
+            {
+                foreach (var r in Model.Items)
+                {
+                    // same canEdit rules as main view
+                    bool canEdit = isAdmin
+                                   || (isManager
+                                       && string.Equals(r.SubmittedByRole, "User", StringComparison.OrdinalIgnoreCase)
+                                       && r.ApplicationUserId != currentUserId);
+
+                    <tr class="report-row" id="report-row-@r.Id" data-report-id="@r.Id">
+                        <td>@r.Date.ToString("dd-MM-yyyy")</td>
+                        <td class="report-text">@r.Task</td>
+                        <td class="report-text">@r.Note</td>
+
+                        <td>@(string.IsNullOrWhiteSpace(r.ReviewerComment) ? "—" : r.ReviewerComment)</td>
+                        <td>@r.ReportedTo</td>
+                        <td class="text-center col-submitted">@r.SubmittedByRole</td>
+
+                        <td class="actions-cell">
+                            <div class="row-actions">
+
+                                @if (canEdit)
+                                {
+                                    <!-- EDIT SYMBOL -->
+                                    <a title="Edit"
+                                       onclick="editReportInline(@r.Id)">
+                                        ✏️
+                                    </a>
+                                }
+
+                                @if (isAdmin)
+                                {
+                                    <!-- DELETE SYMBOL -->
+                                    <a title="Delete"
+                                       onclick="deleteReport(@r.Id, '@ViewBag.TargetUserId')">
+                                        🗑
+                                    </a>
+                                }
+
+                            </div>
+                        </td>
+
+                        
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="7" class="text-center text-muted">
+                        No reports found
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@section Scripts {
+
+    <script>
+        document.getElementById("addReportDate")?.addEventListener("change", function () {
+
+            const raw = this.value; // yyyy-MM-dd
+            if (!raw) return;
+
+            const [y, m, d] = raw.split("-");
+            const formatted = `${d}-${m}-${y}`;
+
+            const userId = "@ViewBag.TargetUserId";
+
+            fetch(`/Reports/CheckReportExists?userId=${encodeURIComponent(userId)}&date=${encodeURIComponent(formatted)}`)
+                .then(r => r.json())
+                .then(data => {
+                    if (data.exists) {
+                        alert(`Report already exists on ${formatted}`);
+                        this.value = "";
+                    }
+                })
+                .catch(() => {
+                    // ignore network errors here
+                });
+        });
+    </script>
+
+    <script>
+        function showInlineAddReport(userId) {
+
+            const dateInput = document.getElementById("addReportDate");
+            if (!dateInput.value) {
+                alert("Please select date");
+                return;
+            }
+
+            const [y, m, d] = dateInput.value.split("-");
+            const formattedDate = `${d}-${m}-${y}`;
+
+            fetch(`/Reports/CheckReportExists?userId=${encodeURIComponent(userId)}&date=${encodeURIComponent(formattedDate)}`)
+                .then(r => r.json())
+                .then(data => {
+                    if (data.exists) {
+                        alert("Report already exists for selected date");
+                        return;
+                    }
+                    loadAddReportForm(userId, formattedDate);
+                })
+                .catch(() => {
+                    alert("Failed to check existing report");
+                });
+        }
+
+        function loadAddReportForm(userId, formattedDate) {
+            const container = document.getElementById("inlineAddReportContainer");
+            if (!container) return;
+
+            // show loading
+            container.classList.remove("d-none");
+            container.innerHTML = "<div class='text-muted p-3'>Loading add form...</div>";
+
+            fetch(`/Reports/AddReportPanel?userId=${encodeURIComponent(userId)}&date=${encodeURIComponent(formattedDate)}`)
+                .then(res => {
+                    if (!res.ok) throw new Error();
+                    return res.text();
+                })
+                .then(html => {
+                    container.innerHTML = html;
+                    container.classList.remove("d-none");       
+                })
+                .catch(() => {
+                    container.innerHTML = "<div class='text-danger p-3'>Failed to load add form</div>";
+                });
+        }
+    </script>
+
+    <script>
+        /* ========== CHAR COUNTER ========== */
+        document.addEventListener("input", function (e) {
+            if (!e.target.classList.contains("char-limit")) return;
+            const counter = document.getElementById(e.target.dataset.counter);
+            if (counter) {
+                counter.textContent =
+                    (100 - e.target.value.length) + " characters remaining";
+            }
+        });
+
+        // Expose deleteReport used by panel buttons (calls existing controller endpoint)
+                /* ================= DELETE REPORT INLINE ================= */
+       
+    </script>
+
+
+
+    <script>
+        function editReportInline(reportId) {
+
+            const panel = document.getElementById("detailsPanel");
+            if (!panel) {
+                alert("Right panel not found");
+                return;
+            }
+
+            panel.innerHTML =
+                "<div class='text-muted p-3'>Loading edit form...</div>";
+
+            fetch(`/Reports/EditInlinePanel?id=${reportId}`)
+                .then(res => {
+                    if (!res.ok) throw new Error();
+                    return res.text();
+                })
+                .then(html => {
+                    panel.innerHTML = html;
+                })
+                .catch(() => {
+                    panel.innerHTML =
+                        "<div class='text-danger p-3'>Failed to load edit form</div>";
+                });
+        }
+    </script>
+
+}

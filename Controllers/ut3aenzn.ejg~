@@ -1,0 +1,138 @@
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using UserRoles.Data;
+using UserRoles.Models;
+
+[Authorize(Roles = "Admin,Manager")]
+public class TasksController : Controller
+{
+    private readonly AppDbContext _context;
+    private readonly UserManager<Users> _userManager;
+
+    public TasksController(AppDbContext context, UserManager<Users> userManager)
+    {
+        _context = context;
+        _userManager = userManager;
+    }
+
+    // GET: Assign Task
+    [Authorize(Roles = "Admin,Manager")]
+    public async Task<IActionResult> Create()
+    {
+        var currentUser = await _userManager.GetUserAsync(User);
+        var currentUserId = currentUser.Id;
+
+        IQueryable<Users> usersQuery = _userManager.Users;
+
+        if (User.IsInRole("Admin"))
+        {
+            // Admin → anyone except self
+            usersQuery = usersQuery.Where(u => u.Id != currentUserId);
+        }
+        else if (User.IsInRole("Manager"))
+        {
+            // Manager → direct users + sub managers
+            usersQuery = usersQuery.Where(u =>
+                u.ParentUserId == currentUserId &&
+                u.Id != currentUserId &&
+                !UserManager.IsInRoleAsync(u, "Admin").Result
+            );
+        }
+        else if (User.IsInRole("SubManager"))
+        {
+            // SubManager → only users under them
+            usersQuery = usersQuery.Where(u =>
+                u.ParentUserId == currentUserId &&
+                !UserManager.IsInRoleAsync(u, "Manager").Result &&
+                !UserManager.IsInRoleAsync(u, "Admin").Result
+            );
+        }
+
+        ViewBag.Users = await usersQuery.ToListAsync();
+        return View();
+    }
+
+
+    // POST: Assign Task
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [Authorize(Roles = "Admin,Manager,SubManager")]
+    public async Task<IActionResult> Create(string title, string priority, string assignedToId)
+    {
+        var assignedBy = await _userManager.GetUserAsync(User);
+
+        if (assignedBy.Id == assignedToId)
+            return Forbid();
+
+        var targetUser = await _userManager.FindByIdAsync(assignedToId);
+        if (targetUser == null)
+            return NotFound();
+
+        // 🔒 ROLE ENFORCEMENT
+        if (User.IsInRole("Manager"))
+        {
+            if (targetUser.ParentUserId != assignedBy.Id)
+                return Forbid();
+
+            if (await _userManager.IsInRoleAsync(targetUser, "Admin"))
+                return Forbid();
+        }
+
+        if (User.IsInRole("SubManager"))
+        {
+            if (targetUser.ParentUserId != assignedBy.Id)
+                return Forbid();
+
+            if (!await _userManager.IsInRoleAsync(targetUser, "User"))
+                return Forbid();
+        }
+
+        var task = new AssignedTask
+        {
+            Title = title,
+            Priority = priority,
+            AssignedById = assignedBy.Id,
+            AssignedToId = assignedToId
+        };
+
+        _context.AssignedTasks.Add(task);
+        await _context.SaveChangesAsync();
+
+        TempData["Success"] = "Task assigned successfully";
+        return RedirectToAction("Create");
+    }
+
+
+
+    [Authorize(Roles = "User")]
+    public async Task<IActionResult> AssignedToMe()
+    {
+        var user = await _userManager.GetUserAsync(User);
+
+        var tasks = await _context.AssignedTasks
+            .Include(t => t.AssignedBy)
+            .Where(t => t.AssignedToId == user.Id)
+            .OrderByDescending(t => t.CreatedAt)
+            .ToListAsync();
+
+        return View(tasks);
+    }
+
+    [Authorize(Roles = "User,Manager,SubManager")]
+    public async Task<IActionResult> Index()
+    {
+        var user = await _userManager.GetUserAsync(User);
+
+        var tasks = await _context.AssignedTasks
+            .Include(t => t.AssignedBy)
+            .Where(t => t.AssignedToId == user.Id)
+            .OrderByDescending(t => t.CreatedAt)
+            .ToListAsync();
+
+        return View(tasks);
+    }
+
+
+}

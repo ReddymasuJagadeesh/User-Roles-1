@@ -1,0 +1,591 @@
+﻿@model UserRoles.ViewModels.PagedResult<(UserRoles.Models.Users User, string Role)>
+@{
+    ViewData["Title"] = "Users";
+
+    string? editId = ViewBag.EditId as string;
+
+    var managerTree = ViewBag.ManagerTree as List<UserRoles.Models.Users>
+        ?? new List<UserRoles.Models.Users>();
+
+    string? selectedManagerId = ViewBag.SelectedManagerId as string;
+}
+
+
+
+
+<!-- ================= SUCCESS / ERROR TOASTS ================= -->
+@if (TempData["Success"] != null)
+{
+    <div class="toast-container-fixed">
+        <div class="alert alert-success toast-message auto-dismiss">
+            @TempData["Success"]
+        </div>
+    </div>
+}
+
+@if (TempData["Error"] != null)
+{
+    <div class="toast-container-fixed">
+        <div class="alert alert-danger toast-message auto-dismiss">
+            @TempData["Error"]
+        </div>
+    </div>
+}
+
+<!-- ================= ADD USER ================= -->
+@if (User.IsInRole("Admin"))
+{
+    <a asp-action="Create" class="btn btn-success mb-3">
+        Add User
+    </a>
+}
+
+
+
+
+@if (User.IsInRole("Admin"))
+{
+    // ===== Declare variables ONCE =====
+   // string? selectedManagerId = ViewBag.SelectedManagerId as string;
+
+    var selectedManager = !string.IsNullOrEmpty(selectedManagerId)
+        ? managerTree.FirstOrDefault(x => x.Id == selectedManagerId)
+        : null;
+
+    var parentManager = selectedManager != null && !string.IsNullOrEmpty(selectedManager.ParentUserId)
+        ? managerTree.FirstOrDefault(x => x.Id == selectedManager.ParentUserId)
+        : null;
+
+    <!-- ===== VIEWING BREADCRUMB ===== -->
+    <div class="mb-3">
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+            <span class="fw-semibold text-muted">Viewing:</span>
+
+            <!-- Admin -->
+            <span class="badge rounded-pill bg-primary px-3 py-2">
+                <i class="bi bi-house-door-fill me-1"></i> Admin
+            </span>
+
+            @* Admin → Manager *@
+            @if (parentManager == null && selectedManager != null)
+            {
+                <i class="bi bi-chevron-right text-muted"></i>
+                <span class="badge rounded-pill bg-success px-3 py-2">
+                    @selectedManager.Name
+                </span>
+            }
+
+            @* Admin → Manager → Sub-Manager *@
+            @if (parentManager != null && selectedManager != null)
+            {
+                <i class="bi bi-chevron-right text-muted"></i>
+                <span class="badge rounded-pill bg-success px-3 py-2">
+                    @parentManager.Name
+                </span>
+
+                <i class="bi bi-chevron-right text-muted"></i>
+                <span class="badge rounded-pill bg-warning text-dark px-3 py-2">
+                    @selectedManager.Name
+                </span>
+            }
+        </div>
+    </div>
+
+    <!-- ===== FILTER BY MANAGER ===== -->
+   // string? selectedManagerId = ViewBag.SelectedManagerId as string;
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-header fw-semibold">
+            <i class="bi bi-diagram-3 me-2"></i> Filter by Manager
+        </div>
+
+        <div class="card-body">
+
+            <!-- ADMIN ROOT -->
+            <a asp-action="Index"
+               asp-route-managerId="ADMIN"
+               class="btn btn-outline-primary btn-sm w-100 mb-2 text-start">
+                <i class="bi bi-house-door-fill me-1"></i> Admin
+            </a>
+
+            <!-- ROOT MANAGERS -->
+            @foreach (var root in managerTree.Where(m => m.ParentUserId == null))
+            {
+                @await Html.PartialAsync(
+                "_ManagerNode",
+                (root, managerTree)
+                )
+                }
+
+        </div>
+    </div>
+}
+
+<!-- ================= SUMMARY (TOP – ONCE ONLY) ================= -->
+<div class="d-flex justify-content-between align-items-center mb-2">
+
+    <div class="mt-2 text-muted">
+        Total Users: <strong>@Model.TotalItems</strong>
+    </div>
+    <!--  <h5 class="mb-0">
+          Total Users: <strong>@Model.TotalItems</strong>
+      </h5>-->
+
+    <span class="text-muted">
+        Showing @Model.Items.Count of @Model.TotalItems users
+    </span>
+
+
+
+
+</div>
+
+<!-- 🔍 SEARCH BOX -->
+<input type="text"
+       id="userSearch"
+       class="form-control mb-3"
+       placeholder="Search by name, email or role..." />
+
+
+    <!-- ================= USERS TABLE ================= -->
+    <div class="table-responsive">
+        <table class="table table-bordered table-hover align-middle fixed-table" id="usersTable">
+            <thead class="table-light">
+                <tr>
+                    <th style="width:220px;">Name</th>
+                    <th>Email</th>
+                    <th style="width:140px;">Role</th>
+                    <th style="width:360px;" class="text-center">Actions</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                @if (!Model.Items.Any())
+                {
+                    <tr>
+                        <td colspan="4" class="text-center text-muted">
+                            No users found.
+                        </td>
+                    </tr>
+                }
+                else
+                {
+                    foreach (var item in Model.Items)
+                    {
+                        var user = item.User;
+                        var role = item.Role;
+                        bool isEditing = editId == user.Id;
+
+                        <tr>
+                            @if (isEditing)
+                            {
+                                <form asp-action="EditInline" method="post">
+                                    @Html.AntiForgeryToken()
+
+                                    <input type="hidden" name="id" value="@user.Id" />
+                                    <input type="hidden" name="page" value="@Model.Page" />
+                                    <input type="hidden" name="pageSize" value="@Model.PageSize" />
+
+                                <td>
+                                    <input name="Name"
+                                           value="@user.Name"
+                                           class="form-control form-control-sm"
+                                           maxlength="20"
+                                           required />
+                                </td>
+
+                                <td>
+                                    <input name="email"
+                                           value="@user.Email"
+                                           class="form-control form-control-sm"
+                                           required />
+                                </td>
+
+                                <td>@role</td>
+
+                                <td class="text-center">
+                                    <div class="d-inline-flex gap-2">
+                                        <button type="submit"
+                                                class="btn btn-success btn-sm">
+                                            Save
+                                        </button>
+
+                                        <a asp-action="Index"
+                                           asp-route-page="@Model.Page"
+                                           asp-route-pageSize="@Model.PageSize"
+                                           class="btn btn-secondary btn-sm">
+                                            Cancel
+                                        </a>
+                                    </div>
+                                </td>
+                                </form>
+                            }
+
+                            else
+                            {
+                                <!-- ===== READ MODE ===== -->
+                                <td class="user-name">@user.Name</td>
+                                <td>@user.Email</td>
+                                <td>@role</td>
+
+                                <td class="text-center">
+                                    <div class="d-inline-flex gap-2">
+                                    @if (role != "Admin")
+                                    {
+                                        <a asp-controller="Reports"
+                                           asp-action="UserReports"
+                                           asp-route-userId="@user.Id"
+                                           class="btn btn-primary btn-sm">
+                                            View Reports
+                                        </a>
+                                    }
+
+                                    @if (User.IsInRole("Admin"))
+                                    {
+                                        <button type="button"
+                                                class="btn btn-info btn-sm"
+                                                onclick="openAssignModal(
+                                '@user.Id',
+                                '@user.Name',
+                                '@user.ParentUserId',
+                                '@(user.ParentUserId == null
+                                                                    ? "Admin"
+                                                                    : (ViewBag.ManagerNames != null &&
+                                                                       ViewBag.ManagerNames.ContainsKey(user.ParentUserId)
+                                                                        ? ViewBag.ManagerNames[user.ParentUserId]
+                                                                        : "Admin"))'
+                            )">
+                                            Assign To
+                                        </button>
+                                    }
+
+
+
+                                    <a asp-action="Index"
+                                       asp-route-editId="@user.Id"
+                                       asp-route-page="@Model.Page"
+                                       asp-route-pageSize="@Model.PageSize"
+                                       asp-route-search="@ViewBag.Search"
+                                       asp-route-managerId="@ViewBag.SelectedManagerId"
+                                       class="btn btn-warning btn-sm">
+                                        ✏ Edit
+                                    </a>
+
+                                        @if (User.IsInRole("Admin"))
+                                        {
+                                            if (role == "Manager")
+                                            {
+                                                <!-- Manager delete → popup only -->
+                                                <button type="button"
+                                                        class="btn btn-danger btn-sm"
+                                                        onclick="openManagerDeleteModal('@user.Id', '@user.Name')">
+                                                    Delete
+                                                </button>
+                                            }
+                                            else
+                                            {
+                                                <!-- Normal user delete -->
+                                                <form asp-action="Delete"
+                                                      method="post"
+                                                      class="d-inline">
+
+                                                    @Html.AntiForgeryToken()
+
+                                                    <input type="hidden" name="id" value="@user.Id" />
+                                                    <input type="hidden" name="page" value="@Model.Page" />
+                                                    <input type="hidden" name="pageSize" value="@Model.PageSize" />
+                                                    <input type="hidden" name="search" value="@ViewBag.Search" />
+
+                                                    <button class="btn btn-danger btn-sm"
+                                                            onclick="return confirm('Delete this user?');">
+                                                        Delete
+                                                    </button>
+                                                </form>
+                                            }
+                                        }
+
+
+                                    </div>
+                                </td>
+                            }
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+
+    </div>
+
+
+
+
+<!-- ================= SUMMARY (BOTTOM – ONCE ONLY) ================= -->
+
+
+<!-- ================= PAGINATION (OUTSIDE LOOP) ================= -->
+@if (Model.TotalPages > 1)
+{
+    <div class="d-flex justify-content-center align-items-center gap-3 mt-3">
+
+        <a class="btn btn-outline-secondary btn-sm @(Model.Page == 1 ? "disabled" : "")"
+           asp-action="Index"
+           asp-route-search="@ViewBag.Search"
+           asp-route-managerId="@ViewBag.SelectedManagerId"
+           asp-route-page="@(Model.Page - 1)"
+           asp-route-pageSize="@Model.PageSize"
+           asp-route-editId="@editId">
+           
+
+            ← Previous
+        </a>
+
+
+        <span class="fw-semibold">
+            Page @Model.Page of @Model.TotalPages
+        </span>
+
+        <a class="btn btn-outline-secondary btn-sm @(Model.Page == Model.TotalPages ? "disabled" : "")"
+           asp-action="Index"
+           asp-route-search="@ViewBag.Search"
+           asp-route-managerId="@ViewBag.SelectedManagerId"
+           asp-route-page="@(Model.Page + 1)"
+           asp-route-pageSize="@Model.PageSize"
+           asp-route-editId="@editId">
+           
+
+            Next →
+        </a>
+
+
+    </div>
+}
+
+<!-- ================= MANAGER DELETE WARNING MODAL ================= -->
+<div class="modal fade" id="managerDeleteModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    Cannot Delete Manager
+                </h5>
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+                <p id="managerDeleteMessage"
+                   class="fw-bold text-danger"></p>
+
+                <p>
+                    This manager has users assigned.<br />
+                    Please re-assign them before deleting.
+                </p>
+            </div>
+
+            <div class="modal-footer">
+                <a id="assignUsersBtn"
+                   class="btn btn-primary">
+                    Assign Users
+                </a>
+
+                <button type="button"
+                        class="btn btn-secondary"
+                        data-bs-dismiss="modal">
+                    Cancel
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- ================= ASSIGN USER MODAL ================= -->
+<div class="modal fade" id="assignUserModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+
+            <form asp-action="AssignUser" method="post">
+                @Html.AntiForgeryToken()
+
+                <div class="modal-header bg-info text-white">
+                    <h5 class="modal-title">Assign User</h5>
+                    <button type="button"
+                            class="btn-close"
+                            data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body">
+
+                    <input type="hidden" id="assignUserId" name="userId" />
+
+                    <p class="text-muted mb-1">
+                        <strong>Currently assigned to:</strong>
+                        <span id="currentAssignmentText"></span>
+                    </p>
+
+                    <p class="fw-semibold">
+                        Assign <span id="assignUserName"></span> to:
+                    </p>
+
+                    <select name="managerId"
+                            id="assignManagerSelect"
+                            class="form-select"
+                            required>
+
+                        <!-- Admin always visible -->
+                        <option value="ADMIN">Admin</option>
+
+                        @{
+                            var assignableManagers =
+                            ViewBag.AssignableManagers as List<UserRoles.Models.Users>
+                            ?? new List<UserRoles.Models.Users>();
+                        }
+
+                        @foreach (var manager in assignableManagers)
+                        {
+                            <option value="@manager.Id">@manager.Name</option>
+                        }
+
+                    </select>
+
+
+
+
+                   
+
+                </div>
+
+                <div class="modal-footer">
+                    <button type="submit"
+                            class="btn btn-success">
+                        Save
+                    </button>
+
+                    <button type="button"
+                            class="btn btn-secondary"
+                            data-bs-dismiss="modal">
+                        Cancel
+                    </button>
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+</div>
+
+
+@section Scripts {
+    <script>
+        document.querySelectorAll('.auto-dismiss').forEach(alert => {
+            setTimeout(() => {
+                alert.classList.add('fade');
+                setTimeout(() => alert.remove(), 400);
+            }, 5000);
+        });
+    </script>
+   
+
+    <script>
+        function openManagerDeleteModal(managerId, managerName) {
+
+            document.getElementById("managerDeleteMessage")
+                .innerText = `Manager "${managerName}" has users assigned.`;
+
+            document.getElementById("assignUsersBtn")
+                .href = `/Users/ConfirmDeleteManager?managerId=${managerId}`;
+
+            var modal = new bootstrap.Modal(
+                document.getElementById('managerDeleteModal')
+            );
+            modal.show();
+        }
+    </script>
+    <script>
+                       function openAssignModal(userId, userName, currentManagerId, currentManagerName) {
+
+            document.getElementById("assignUserId").value = userId;
+            document.getElementById("assignUserName").innerText = userName;
+
+            document.getElementById("currentAssignmentText").innerText =
+                currentManagerName && currentManagerName !== "Unknown"
+                    ? currentManagerName
+                    : "Admin";
+
+            const select = document.getElementById("assignManagerSelect");
+
+            // Reset options
+            Array.from(select.options).forEach(opt => {
+                opt.hidden = false;
+                opt.disabled = false;
+            });
+
+            // Hide current assignment option
+            if (currentManagerId) {
+                Array.from(select.options).forEach(opt => {
+                    if (opt.value === currentManagerId) {
+                        opt.hidden = true;
+                    }
+                });
+            }
+
+            select.value = "ADMIN";
+
+            new bootstrap.Modal(
+                document.getElementById('assignUserModal')
+            ).show();
+        }
+
+
+    </script>
+    <script>
+        function toggleNode(id, el) {
+            const node = document.getElementById('node-' + id);
+            if (!node) return;
+
+            node.classList.toggle('d-none');
+
+            const icon = el.querySelector('i');
+            icon.classList.toggle('bi-caret-right-fill');
+            icon.classList.toggle('bi-caret-down-fill');
+        }
+    </script>
+
+
+    <script>
+        let debounceTimer;
+
+        document.getElementById("userSearch").addEventListener("keyup", function () {
+            const term = this.value;
+
+            clearTimeout(debounceTimer);
+
+            debounceTimer = setTimeout(() => {
+                fetch(`/Users/SearchUsers?term=${encodeURIComponent(term)}`)
+                    .then(res => res.text())
+                    .then(html => {
+                        document.querySelector("#usersTable tbody").innerHTML = html;
+                        highlight(term);
+                    });
+            }, 300); // 🔥 debounce delay
+        });
+
+        function highlight(text) {
+            if (!text) return;
+
+            const regex = new RegExp(`(${text})`, "gi");
+
+                   document.querySelectorAll("#usersTable td").forEach(cell => {
+            cell.innerHTML = cell.textContent.replace(
+                regex,
+                `<span class="bg-warning">$1</span>`
+            );
+        });
+
+        }
+    </script>
+
+
+}

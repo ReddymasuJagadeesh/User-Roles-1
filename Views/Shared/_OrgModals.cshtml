@@ -1,0 +1,124 @@
+@using UserRoles.Models
+
+@* Shared modals used by OrgChart and other pages. Included once in _Layout so JS can find them. *@
+
+<!-- Add User / Manager Modal -->
+<div class="modal fade" id="addUserModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form id="addUserForm" novalidate>
+                @Html.AntiForgeryToken()
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalTitle">Add</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+
+                <div class="modal-body">
+                    <input type="hidden" id="role" name="role" />
+                    <input type="hidden" id="managerId" name="managerId" />
+
+                    <div class="mb-3">
+                        <label class="form-label">Name</label>
+                        <input type="text" class="form-control" id="nameInput" name="name" maxlength="20" autocomplete="off" required />
+                        <small id="nameError" class="text-danger d-none">Please enter only characters (max 20).</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Email</label>
+                        <input type="email" class="form-control" id="emailInput" name="email" autocomplete="off" required />
+                        <small id="emailError" class="text-danger d-none"></small>
+                    </div>
+
+                    <div class="mb-2">
+                        <label class="form-label">Add As</label>
+                        <div class="d-flex align-items-center gap-4">
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="addType" id="addUserType" value="User" checked />
+                                <label class="form-check-label" for="addUserType">User</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="addType" id="addSecondType" value="SubManager" />
+                                <label class="form-check-label" id="addSecondLabel" for="addSecondType">Sub Manager</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="submit" id="addBtn" class="btn btn-primary" disabled>Add</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit User Modal -->
+   <div class="modal fade" id="editUserModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="editForm" novalidate>
+                @Html.AntiForgeryToken()
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit User</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+
+                <div class="modal-body">
+                    <input type="hidden" id="originalName" />
+                    <input type="hidden" id="originalEmail" />
+                    <input type="hidden" id="editId" name="id" />
+                    <input type="hidden" id="editRole" name="role" />
+
+                    <div class="mb-3">
+                        <label class="form-label">Name</label>
+                        <input class="form-control" id="editName" name="name" maxlength="20" required />
+                        <small id="editNameError" class="text-danger d-none">Please enter only characters (max 20).</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Email</label>
+                        <input class="form-control" id="editEmail" name="email" required />
+                        <small id="editEmailError" class="text-danger d-none">Please enter a valid email.</small>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="submit" id="saveEditBtn" class="btn btn-primary">Update</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="deleteForm" novalidate>
+                @Html.AntiForgeryToken()
+                <div class="modal-body">
+                    <input type="hidden" id="deleteId" name="id" />
+                    <input type="hidden" id="deleteRole" name="role" />
+                    <input type="hidden" id="deleteName" name="name" />
+
+                    <p id="deleteConfirmText" class="fw-semibold"></p>
+
+                    <div id="reassignBlock" class="mt-3 d-none">
+                        <label class="form-label">Reassign users to</label>
+                        <select id="reassignManager" class="form-control" name="reassignToId">
+                            <option value="">Admin</option>
+                        </select>
+                        <small class="text-muted">Required when deleting a manager with users</small>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="submit" id="confirmDeleteBtn" class="btn btn-danger">Delete</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

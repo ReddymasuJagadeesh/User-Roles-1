@@ -1,0 +1,114 @@
+﻿@model UserRoles.ViewModels.LoginViewModel
+
+@{
+    ViewData["Title"] = "Login";
+    Layout = "~/Views/Shared/_AccountLayout.cshtml";
+}
+
+<div class="account-container">
+    <div class="account-box">
+        <h2 class="text-center mb-4">Login</h2>
+        <div class="login-page">
+
+            <div class="login-card">
+                        <form asp-action="Login" method="post" autocomplete="on">
+                            @Html.AntiForgeryToken()
+
+                            <div asp-validation-summary="ModelOnly" class="text-danger mb-2"></div>
+
+                            <!-- EMAIL -->
+                            <div class="mb-3">
+                                <label asp-for="Email" class="form-label"></label>
+                                <input asp-for="Email"
+                                       class="form-control"
+                                       autocomplete="username"
+                                       inputmode="email" />
+                                <span asp-validation-for="Email" class="text-danger"></span>
+                            </div>
+
+                            <!-- PASSWORD -->
+                            <div class="mb-3 position-relative">
+                                <label asp-for="Password" class="form-label"></label>
+
+                                <input asp-for="Password"
+                                       type="password"
+                                       class="form-control"
+                                       id="passwordInput"
+                                       autocomplete="current-password" />
+
+                                <span id="togglePassword"
+                                      class="password-toggle"
+                                      onclick="togglePassword()">🙈</span>
+
+                                <span asp-validation-for="Password" class="text-danger"></span>
+                            </div>
+
+                            <!-- REMEMBER ME -->
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <div class="form-check">
+                                    <input asp-for="RememberMe" class="form-check-input" />
+                                    <label asp-for="RememberMe" class="form-check-label">
+                                        Remember me
+                                    </label>
+                                </div>
+
+                                <a asp-action="VerifyEmail"
+                                   asp-controller="Account"
+                                   class="text-decoration-none">
+                                    Forgot password?
+                                </a>
+                            </div>
+
+                            <button type="submit" class="btn btn-success w-100">
+                                Login
+                            </button>
+                        </form>
+
+                <div class="text-center mt-3">
+                    <a asp-controller="Home" asp-action="Index">Back</a>
+                </div>
+
+
+            </div>
+
+
+        </div>
+
+       
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        function togglePassword() {
+            const input = document.getElementById("passwordInput");
+            const icon = document.getElementById("togglePassword");
+
+            if (input.type === "password") {
+                input.type = "text";
+                icon.textContent = "👀";
+            } else {
+                input.type = "password";
+                icon.textContent = "🙈";
+            }
+        }
+    </script>
+}
+
+<style>
+    .password-toggle {
+        position: absolute;
+        top: 38px;
+        right: 12px;
+        cursor: pointer;
+        font-size: 18px;
+        user-select: none;
+        color: #666;
+    }
+
+        .password-toggle:hover {
+            color: #000;
+        }
+</style>

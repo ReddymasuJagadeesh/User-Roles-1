@@ -1,0 +1,86 @@
+﻿@model List<UserRoles.Models.Users>
+
+@{
+    var manager = ViewBag.Manager as UserRoles.Models.Users;
+    var managers = ViewBag.Managers as IList<UserRoles.Models.Users>;
+}
+
+<h4 class="text-danger">
+    Delete Manager: <strong>@manager?.Name</strong>
+</h4>
+
+@if (Model.Any())
+{
+    <form asp-action="DeleteManager" method="post">
+        @Html.AntiForgeryToken()
+
+        <input type="hidden" name="managerId" value="@manager.Id" />
+
+        <div class="mb-3">
+            <label class="fw-bold">Reassign users to</label>
+            <select name="targetManagerId" class="form-select" required>
+                <option value="">-- Select --</option>
+                <option value="ADMIN">Admin</option>
+                @foreach (var m in managers.Where(m => m.Id != manager.Id))
+                {
+                    <option value="@m.Id">@m.Name</option>
+                }
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label class="fw-bold">Reassignment mode</label><br />
+            <input type="radio" name="shiftAll" value="true" checked />
+            Shift ALL users<br />
+            <input type="radio" name="shiftAll" value="false" />
+            Shift SELECTED users
+        </div>
+
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Select</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var user in Model)
+                {
+                    <tr>
+                        <td>
+                            <input type="checkbox"
+                                   name="selectedUserIds"
+                                   value="@user.Id" />
+                        </td>
+                        <td>@user.Name</td>
+                        <td>@user.Email</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        <button class="btn btn-danger">
+            Confirm Delete Manager
+        </button>
+        <a asp-action="Index"
+           asp-controller="Users"
+           class="btn btn-secondary ms-2">
+            Cancel
+        </a>
+
+    </form>
+}
+else
+{
+    <p>No users under this manager.</p>
+
+    <form asp-action="DeleteManager" method="post">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="managerId" value="@manager.Id" />
+        <input type="hidden" name="targetManagerId" value="ADMIN" />
+        <input type="hidden" name="shiftAll" value="true" />
+
+        <button class="btn btn-danger">Delete Manager</button>
+    </form>
+}

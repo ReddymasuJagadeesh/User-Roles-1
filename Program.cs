@@ -1,0 +1,84 @@
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using UserRoles.Data;
+using UserRoles.Models;
+using UserRoles.Services;
+using QuestPDF.Fluent;
+using QuestPDF.Infrastructure;
+
+
+var builder = WebApplication.CreateBuilder(args);
+
+QuestPDF.Settings.License = LicenseType.Community;
+
+// ================= MVC =================
+builder.Services.AddControllersWithViews();
+
+// ================= DATABASE =================
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseNpgsql(
+        builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// ================= IDENTITY =================
+builder.Services.AddIdentity<Users, IdentityRole>(options =>
+{
+    options.Password.RequiredLength = 6;
+    options.Password.RequireDigit = true;
+    options.Password.RequireLowercase = true;
+    options.Password.RequireUppercase = false;      
+    options.Password.RequireNonAlphanumeric = false;
+
+    options.User.RequireUniqueEmail = true;
+})
+.AddEntityFrameworkStores<AppDbContext>()
+.AddDefaultTokenProviders();
+
+// ================= EMAIL =================
+builder.Services.Configure<EmailSettings>(
+    builder.Configuration.GetSection("EmailSettings"));
+
+builder.Services.AddTransient<IEmailService, EmailService>();
+
+// ================= COOKIE =================
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.LoginPath = "/Account/Login";
+    options.AccessDeniedPath = "/Account/AccessDenied";
+    options.ExpireTimeSpan = TimeSpan.FromMinutes(30);
+    options.SlidingExpiration = true;
+});
+
+
+
+
+
+// ================= APP =================
+var app = builder.Build();
+
+// ================= SEED =================
+await SeedService.SeedDatabase(app.Services);
+
+// ================= PIPELINE =================
+if (!app.Environment.IsDevelopment())
+{
+    app.UseExceptionHandler("/Home/Error");
+    app.UseHsts();
+}
+
+app.UseStatusCodePagesWithReExecute("/Home/Error/{0}");
+
+app.UseHttpsRedirection();
+app.UseStaticFiles();
+
+app.UseRouting();
+
+app.UseAuthentication();
+app.UseAuthorization();
+
+// ================= ROUTING =================
+// 🔴 IMPORTANT: DEFAULT ROUTE → RedirectByRole so authenticated Admin/Manager go to OrgChart
+app.MapControllerRoute(
+    name: "default",
+    pattern: "{controller=Home}/{action=RedirectByRole}/{id?}");
+
+app.Run();
