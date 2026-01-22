@@ -28,12 +28,16 @@
         (isManager || isAdmin) && targetUserId != currentUserId;
 }
 
-@if (ViewBag.ReportOwnerName != null)
+@* ================= PAGE TITLE ================= *@
+@if (User.IsInRole("User"))
 {
-    <h5 class="text-muted mb-3">
-        <strong>@ViewBag.ReportOwnerName</strong> Reports
-    </h5>
+    <h2>Reports</h2>
 }
+else
+{
+    <h2>@ViewBag.ReportOwnerName Reports</h2>
+}
+
 
 <style>
     /* small legacy helpers kept local for compatibility (most styling moved to site.css) */

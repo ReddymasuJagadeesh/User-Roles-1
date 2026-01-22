@@ -621,7 +621,7 @@ body {
 }
 
 /* Container anchored to the right of the Submitted column */
-.row-actions {
+/*.row-actions {
     position: absolute;
     right: 8px;
     top: 50%;
@@ -632,7 +632,7 @@ body {
     display: inline-flex;
     gap: .35rem;
     z-index: 20;
-}
+}*/
 
 /*.report-row:hover .row-actions {
     opacity: 1;

@@ -57,6 +57,18 @@ public class TasksController : Controller
         }
 
         ViewBag.Users = allowedUsers;
+
+        // 🔽 FETCH TASKS ASSIGNED BY CURRENT USER
+        var assignedTasks = await _context.AssignedTasks
+            .Include(t => t.AssignedTo)
+            .Where(t => t.AssignedById == currentUser.Id)
+            .OrderByDescending(t => t.CreatedAt)
+            .ToListAsync();
+
+        ViewBag.AssignedTasks = assignedTasks;
+
+        return View();
+
         return View();
     }
 

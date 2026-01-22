@@ -18,30 +18,42 @@
     bool showAddReportForOthers =
         (isManager || isAdmin) && targetUserId != currentUserId;
 }
-
-<!-- Local CSS to ensure hover actions work in the injected panel -->
 <style>
-    .report-row { position: relative; }
-    .actions-cell { position: relative; overflow: visible; padding-right: .5rem; }
+    /* ===== FORCE ACTION ICON VISIBILITY ===== */
+    /* ===== FIX ACTION ICON CLICK ISSUE ===== */
+
+    table {
+        position: relative;
+        z-index: 1;
+    }
+
+    .report-row {
+        position: static !important;
+    }
 
     .actions-cell {
-        text-align: center;
+        position: relative !important;
+        z-index: 9999 !important;
+        pointer-events: auto !important;
     }
 
     .row-actions {
-        display: inline-flex;
-        gap: .6rem;
+        display: inline-flex !important;
+        gap: 8px;
+        align-items: center;
+        justify-content: center;
+        pointer-events: auto !important;
     }
 
-        .row-actions a {
-            font-size: 1.1rem;
+        .row-actions span {
             cursor: pointer;
-            text-decoration: none;
+            font-size: 16px;
+            user-select: none;
+            pointer-events: auto !important;
         }
 
-    
-    .row-actions .btn { padding: .275rem .5rem; font-size: .82rem; }
 </style>
+
 
 <!-- ================= HEADER ================= -->
 <h5 class="mb-3">
@@ -117,11 +129,19 @@
             {
                 foreach (var r in Model.Items)
                 {
-                    // same canEdit rules as main view
-                    bool canEdit = isAdmin
-                                   || (isManager
-                                       && string.Equals(r.SubmittedByRole, "User", StringComparison.OrdinalIgnoreCase)
-                                       && r.ApplicationUserId != currentUserId);
+                    // ================= ROLE PERMISSIONS =================
+                    bool canView = User.IsInRole("Admin") ||
+                    User.IsInRole("Manager") ||
+                    User.IsInRole("SubManager");
+
+                    bool canEdit =
+                    User.IsInRole("Admin") ||
+                    (User.IsInRole("Manager") &&
+                    r.SubmittedByRole == "User") ||
+                    (User.IsInRole("SubManager") &&
+                    r.SubmittedByRole == "User");
+
+                    bool canDelete = User.IsInRole("Admin");
 
                     <tr class="report-row" id="report-row-@r.Id" data-report-id="@r.Id">
                         <td>@r.Date.ToString("dd-MM-yyyy")</td>
@@ -132,23 +152,33 @@
                         <td>@r.ReportedTo</td>
                         <td class="text-center col-submitted">@r.SubmittedByRole</td>
 
-                        <td class="actions-cell">
+                        <!-- ================= ACTIONS COLUMN ================= -->
+                        <td class="actions-cell text-center">
                             <div class="row-actions">
 
+                                <!-- VIEW -->
+                                <a title="View"
+                                   href="javascript:void(0)"
+                                   onclick="viewReport(@r.Id)">
+                                    👁
+                                </a>
+
+                                <!-- EDIT -->
                                 @if (canEdit)
                                 {
-                                    <!-- EDIT SYMBOL -->
                                     <a title="Edit"
+                                       href="javascript:void(0)"
                                        onclick="editReportInline(@r.Id)">
                                         ✏️
                                     </a>
                                 }
 
-                                @if (isAdmin)
+                                <!-- DELETE -->
+                                @if (canDelete)
                                 {
-                                    <!-- DELETE SYMBOL -->
                                     <a title="Delete"
-                                       onclick="deleteReport(@r.Id, '@ViewBag.TargetUserId')">
+                                       href="javascript:void(0)"
+                                       onclick="deleteReport(@r.Id)">
                                         🗑
                                     </a>
                                 }
@@ -156,7 +186,10 @@
                             </div>
                         </td>
 
-                        
+
+
+
+     
                     </tr>
                 }
             }
@@ -264,33 +297,5 @@
        
     </script>
 
-
-
-    <script>
-        function editReportInline(reportId) {
-
-            const panel = document.getElementById("detailsPanel");
-            if (!panel) {
-                alert("Right panel not found");
-                return;
-            }
-
-            panel.innerHTML =
-                "<div class='text-muted p-3'>Loading edit form...</div>";
-
-            fetch(`/Reports/EditInlinePanel?id=${reportId}`)
-                .then(res => {
-                    if (!res.ok) throw new Error();
-                    return res.text();
-                })
-                .then(html => {
-                    panel.innerHTML = html;
-                })
-                .catch(() => {
-                    panel.innerHTML =
-                        "<div class='text-danger p-3'>Failed to load edit form</div>";
-                });
-        }
-    </script>
-
 }
+

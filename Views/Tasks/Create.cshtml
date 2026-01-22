@@ -31,3 +31,41 @@
 
     <button class="btn btn-primary">Assign Task</button>
 </form>
+
+@if (ViewBag.AssignedTasks != null && ((List<UserRoles.Models.AssignedTask>)ViewBag.AssignedTasks).Any())
+{
+    <hr />
+    <h5 class="mt-4">📋 Assigned Tasks</h5>
+
+    <table class="table table-bordered table-sm mt-3 align-middle">
+        <thead class="table-light">
+            <tr>
+                <th>Task</th>
+                <th>Priority</th>
+                <th>Assigned To</th>
+                <th>Assigned On</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var task in (List<UserRoles.Models.AssignedTask>)ViewBag.AssignedTasks)
+            {
+                <tr>
+                    <td>@task.Title</td>
+                    <td>
+                        <span class="badge bg-@(task.Priority == "High" ? "danger" :
+                                                                         task.Priority == "Medium" ? "warning" : "secondary")">
+                            @task.Priority
+                        </span>
+                    </td>
+                    <td>@task.AssignedTo?.Name</td>
+                    <td>@task.CreatedAt.ToLocalTime().ToString("dd-MM-yyyy HH:mm")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <p class="text-muted mt-3">No tasks assigned yet.</p>
+}
+

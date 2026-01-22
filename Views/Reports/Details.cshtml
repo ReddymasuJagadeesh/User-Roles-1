@@ -24,7 +24,7 @@
 
             <dt class="col-sm-3">Date</dt>
             <dd class="col-sm-9">
-                @Model.Date.ToString("yyyy-MM-dd")
+                @Model.Date.ToString("dd-MM-yyyy")
             </dd>
 
             <dt class="col-sm-3">Task</dt>
@@ -53,21 +53,4 @@
         </dl>
     </div>
 
-    <div class="card-footer d-flex gap-2">
-        <a asp-action="UserReports"
-           asp-controller="Reports"
-           asp-route-userId="@Model.ApplicationUserId"
-           class="btn btn-secondary">
-            ← Back to Reports
-        </a>
-
-        @if (isAdminOrManager)
-        {
-            <a asp-action="Index"
-               asp-controller="Users"
-               class="btn btn-outline-dark">
-                ← Back to Users
-            </a>
-        }
-    </div>
 </div>

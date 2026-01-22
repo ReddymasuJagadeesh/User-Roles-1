@@ -384,9 +384,22 @@ namespace UserRoles.Controllers
             };
 
             _context.DailyReports.Add(report);
+            // AFTER saving report
             await _context.SaveChangesAsync();
 
-            return Ok();
+            // 🔁 REDIRECT BASED ON ROLE
+            if (User.IsInRole("User"))
+            {
+                // User stays in Reports/UserReports
+                return RedirectToAction("UserReports", new { userId = targetUserId });
+            }
+
+            // Admin / Manager coming from OrgChart → stay there
+            return RedirectToAction(
+                "OrgChart",
+                "Users"
+            );
+
         }
 
         /* ================= DETAILS ================= */
