@@ -38,11 +38,11 @@
                     Update
                 </button>
 
-                <button type="button"
+                @* <button type="button"
                         class="btn btn-secondary"
                         onclick="cancelEdit()">
                     Cancel
-                </button>
+                </button> *@
             </div>
 
         </form>
@@ -50,9 +50,19 @@
 </div>
 
 <script>
-    // Fallback cancel: reload reports panel for the same user
+    // server-side role exposed to JS as boolean
+    const isAdmin = @User.IsInRole("Admin").ToString().ToLower();
+
+    // Fallback cancel: if admin, go back to OrgChart where edit was likely initiated;
+    // otherwise reload reports panel for the same user
     function cancelEdit() {
         const userId = "@(ViewBag.TargetUserId ?? "")";
+        if (isAdmin) {
+            // redirect admin back to org chart
+            window.location.href = '/Users/OrgChart';
+            return;
+        }
+
         if (userId && typeof loadReports === "function") {
             loadReports(userId);
             return;

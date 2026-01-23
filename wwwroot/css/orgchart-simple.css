@@ -10,20 +10,14 @@
 .org-admin {
     display: flex;
     flex-direction: column;
-    align-items: center;
+    align-items: flex-start; 
     margin-bottom: 20px;
     gap: 12px;
 }
 
 /* ================= LINES ================= */
 
-/* vertical line */
-.org-line {
-    width: 3px;
-    height: 40px;
-    background-color: #94a3b8; /* darker */
-    margin: 0 auto;
-}
+
 
     /* smaller vertical line */
     .org-line.small {
@@ -432,84 +426,6 @@
 }
 
 
-/* ================= MANAGER → SUB MANAGER ================= */
-
-/* horizontal line from manager middle-left 
-.manager-node::before {
-    content: '';
-    position: absolute;
-    left: -30px;
-    top: 50%;
-    width: 30px;
-    height: 2px;
-    background: #9aa7bd;
-    transform: translateY(-50%);
-}*/
-
-/* vertical line down to sub managers 
-.org-submanagers::before {
-    content: '';
-    position: absolute;
-    right: 100%;
-    top: 0;
-    bottom: 0;
-    width: 2px;
-    background: #9aa7bd;
-}*/
-/* ================= MANAGER → USERS ================= */
-
-/* horizontal line from manager middle-right 
-.manager-node::after {
-    content: '';
-    position: absolute;
-    right: -30px;
-    top: 50%;
-    width: 30px;
-    height: 2px;
-    background: #9aa7bd;
-    transform: translateY(-50%);
-}
-
-/* vertical chain for users
-.user-chain {
-    position: relative;
-}
-
-    .user-chain::before {
-        content: '';
-        position: absolute;
-        left: -15px;
-        top: 0;
-        bottom: 0;
-        width: 2px;
-        background: #9aa7bd;
-    }
-
-    /* small connector from chain to each user 
-    .user-chain .org-box.user::before {
-        content: '';
-        position: absolute;
-        left: -15px;
-        top: 50%;
-        width: 15px;
-        height: 2px;
-        background: #9aa7bd;
-        transform: translateY(-50%);
-    }
-.org-box {
-    position: relative;
-}
-
-.org-submanagers,
-.org-users {
-    position: relative;
-    margin-top: 15px;
-}
-
-    .org-users .org-box.user {
-        margin-top: 12px;
-    }
-    */
 
 /* ================= ICON BUTTON FIX ================= */
 

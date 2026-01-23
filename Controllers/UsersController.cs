@@ -925,28 +925,29 @@ Please change your password after login.
             if (user == null)
                 return BadRequest("User not found");
 
-            var roles = await _userManager.GetRolesAsync(user);
-            var userRole = roles.FirstOrDefault();
-
-            // ❌ Cannot drop on User (preserve)
-            if (!string.IsNullOrEmpty(managerId))
+            // 🔥 ADMIN DROP (manager → admin)
+            if (managerId == "ADMIN")
             {
-                var target = await _context.Users.FindAsync(managerId);
-                var targetRole = (await _userManager.GetRolesAsync(target)).FirstOrDefault();
-
-                if (targetRole == "User")
-                    return BadRequest("Cannot assign under User");
+                user.ParentUserId = null;
+                user.ManagerId = null;
+                await _context.SaveChangesAsync();
+                return Ok(new { success = true });
             }
 
-            // ✅ Allow Admin to reassign any user (including managers).
-            // Update parent
-            user.ParentUserId = managerId;
-            user.ManagerId = managerId;
+            // 🔽 Manager drop
+            var manager = await _context.Users.FindAsync(managerId);
+            if (manager == null)
+                return BadRequest("Target manager not found");
 
-            // No cascade modifications required here: when moving a manager, its children remain under it.
+            user.ParentUserId = manager.Id;
+            user.ManagerId = manager.Id;
+
             await _context.SaveChangesAsync();
-            return Ok();
+            return Ok(new { success = true });
         }
+
+
+
 
         /// <summary>
         /// Moves entire subtree when a SubManager is reassigned
@@ -969,6 +970,50 @@ Please change your password after login.
                 await CascadeMove(child.Id, subManagerId);
             }
         }
+
+
+
+        [Authorize(Roles = "Admin")]
+        [HttpPost]
+        public async Task<IActionResult> MoveOrgNode([FromBody] MoveOrgNodeRequest model)
+        {
+            if (model == null || string.IsNullOrWhiteSpace(model.UserId))
+                return BadRequest("Invalid request");
+
+            var user = await _context.Users.FindAsync(model.UserId);
+            if (user == null)
+                return NotFound("User not found");
+
+            // ===============================
+            // 🔴 MANAGER ➜ ADMIN (THIS WAS MISSING)
+            // ===============================
+            if (model.NewParentId == "ADMIN")
+            {
+                user.ParentUserId = null;
+                user.ManagerId = null;
+
+                await _context.SaveChangesAsync();
+                return Ok(new { success = true, movedTo = "ADMIN" });
+            }
+
+            // ===============================
+            // 🟢 ADMIN / MANAGER ➜ MANAGER
+            // ===============================
+            var manager = await _context.Users.FindAsync(model.NewParentId);
+            if (manager == null)
+                return NotFound("Manager not found");
+
+            user.ParentUserId = manager.Id;
+            user.ManagerId = manager.Id;
+
+            await _context.SaveChangesAsync();
+            return Ok(new { success = true, movedTo = "MANAGER" });
+        }
+
+
+
+
+
 
         /* ================= INLINE UPDATE (commented out) ================= */
 

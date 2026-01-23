@@ -504,7 +504,7 @@ body {
 
 /* Root wrapper must span screen */
 .org-wrapper-full {
-    width: 100vw;
+    width: 100%;
     height: calc(100vh - 56px); /* navbar height */
     overflow: hidden;
 }
@@ -518,15 +518,21 @@ body {
 
 /* LEFT PANEL (Org Chart) */
 .org-left-panel {
-    width: 20vw; /* 👈 LEFT takes 35% of screen */
+    width: 20vw;
     min-width: 350px;
     max-width: 520px;
     height: 100%;
     overflow-y: auto;
     padding: 20px;
+    box-sizing: border-box;
     border-right: 1px solid #ddd;
     background: #fff;
+    /* 👇 FORCE ALL CONTENT TO LEFT */
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
 }
+
 
 /* RIGHT PANEL (Reports / Details) */
 .org-right-panel {
@@ -620,38 +626,10 @@ body {
     position: relative;
 }
 
-/* Container anchored to the right of the Submitted column */
-/*.row-actions {
-    position: absolute;
-    right: 8px;
-    top: 50%;
-    transform: translateY(-50%);
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity .12s ease-in-out;
-    display: inline-flex;
-    gap: .35rem;
-    z-index: 20;
-}*/
 
-/*.report-row:hover .row-actions {
-    opacity: 1;
-    pointer-events: auto;
-}*/
 
 .row-actions .btn {
     padding: .275rem .5rem;
     font-size: .82rem;
 }
 
-/* Small cell that holds submitted content + actions must allow overflow */
-/*.actions-cell {
-    position: relative;
-    overflow: visible;*/ /* allow the absolute row-actions to be visible */
-    /*padding-right: 2.25rem;*/ /* leave space for the buttons */
-/*}*/
-
-/* Disable hover highlight for submit row */
-/*.table-success:hover {
-    background-color: #cfe5da !important;
-}*/

@@ -448,52 +448,67 @@ namespace UserRoles.Controllers
         /* ================= INLINE UPDATE ================= */
         [Authorize(Roles = "Admin,Manager")]
         [HttpPost]
-        [IgnoreAntiforgeryToken]
+        [ValidateAntiForgeryToken] // ✅ IMPORTANT
         public async Task<IActionResult> InlineUpdate(
     int id,
     string task,
     string note,
     string reviewerComment)
         {
-            var report = await _context.DailyReports.FindAsync(id);
+            // 🔹 Basic server-side validation
+            if (string.IsNullOrWhiteSpace(task) || string.IsNullOrWhiteSpace(note))
+            {
+                return BadRequest(new { message = "Task and Note are required." });
+            }
+
+            // 🔹 Fetch the existing report (tracked entity)
+            var report = await _context.DailyReports
+                .FirstOrDefaultAsync(r => r.Id == id);
+
             if (report == null)
-                return NotFound("Report not found");
+            {
+                return NotFound(new { message = "Report not found." });
+            }
 
-            var currentUserId = _userManager.GetUserId(User);
-
-            // Admin can review anyone
+            // 🔹 Authorization rules
             if (User.IsInRole("Admin"))
             {
-                // allowed
+                // Admin can update any report
             }
             else if (User.IsInRole("Manager"))
             {
-                // Manager can review only User-submitted reports
+                // Manager can update ONLY User-submitted reports
                 if (!string.Equals(report.SubmittedByRole, "User",
                     StringComparison.OrdinalIgnoreCase))
+                {
                     return Forbid();
+                }
             }
             else
             {
                 return Forbid();
             }
 
+            // 🔹 Update fields
+            report.Task = task.Trim();
+            report.Note = note.Trim();
+            report.ReviewerComment = string.IsNullOrWhiteSpace(reviewerComment)
+                ? null
+                : reviewerComment.Trim();
 
-            if (User.IsInRole("Manager") && !User.IsInRole("Admin"))
-            {
-                if (!string.Equals(report.SubmittedByRole, "User",
-                    StringComparison.OrdinalIgnoreCase))
-                    return Forbid();
-            }
+            // 🔹 Persist changes
+            await _context.SaveChangesAsync();
 
-            report.Task = task?.Trim();
-            report.Note = note?.Trim();
-            report.ReviewerComment = reviewerComment?.Trim();
+            // ✅ Always return JSON for inline/AJAX calls
+            return RedirectToAction(
+                "OrgChart",
+                "Users",
+                new { userId = report.ApplicationUserId }
+            );
 
-            await _context.SaveChangesAsync(); // ✅ DB UPDATE
 
-            return Ok(new { message = "Report updated successfully" });
         }
+
 
 
 

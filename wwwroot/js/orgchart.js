@@ -1,4 +1,16 @@
-﻿// Global org chart helpers (idempotent)
+﻿
+// ===============================
+// Drag preparation (GLOBAL)
+// ===============================
+//function prepareDrag(ev) {
+//    const node = ev.target.closest(".org-node");
+//    if (!node) return;
+
+//    node.setAttribute("draggable", "true");
+//}
+
+
+// Global org chart helpers (idempotent)
 (function () {
 
     if (window.__orgchart_loaded) return;
@@ -7,7 +19,7 @@
     // Private drag state
     let __draggedUserId = null;
 
-    function showToast(text, type = 'success', timeout = 2500) {
+    function showToast(text, type = 'success', timeout = 4500) {
         // Create container if not present
         let container = document.querySelector('.toast-container-fixed');
         if (!container) {
@@ -65,81 +77,91 @@
     }
 
     // ---------------- Drag / Drop ----------------
-    window.drag = function (ev) {
-        try {
-            const node = ev.target.closest(".org-node");
-            if (!node) return;
-            const userId = node.dataset.id;
-            if (!userId) return;
-            __draggedUserId = userId;
-            ev.dataTransfer.setData("text/plain", userId);
-        } catch (ex) {
-            console.error("drag error", ex);
+
+   
+    let draggedNode = null;
+
+    function drag(ev) {
+        if (!window.__isAdmin) return;
+
+        const node = ev.target.closest(".org-node");
+        if (!node) return;
+
+        draggedNode = {
+            id: node.dataset.id,
+            role: node.dataset.role,
+            fromParent: node.dataset.parentId || null,
+            name: node.querySelector(".node-title")?.innerText?.trim()
+        };
+
+        console.log("✅ DRAG STARTED:", draggedNode);
+
+        ev.dataTransfer.effectAllowed = "move";
+
+        // ✅ STORE JSON (NOT text/plain)
+        ev.dataTransfer.setData(
+            "application/json",
+            JSON.stringify(draggedNode)
+        );
+    }
+
+
+
+
+
+
+    function allowDrop(ev) {
+        if (!window.__isAdmin) return;
+        ev.preventDefault(); // 🚨 REQUIRED
+    }
+
+
+    function drop(event, newParentId) {
+        event.preventDefault();
+
+        if (!window.__isAdmin) return;
+
+        const data = event.dataTransfer.getData("application/json");
+        if (!data) {
+            console.warn("❌ No drag data found");
+            return;
         }
-    };
 
-    window.allowDrop = function (ev) {
-        try { ev.preventDefault(); } catch (ex) { console.error("allowDrop error", ex); }
-    };
+        const dragged = JSON.parse(data);
 
-    window.drop = async function (ev, targetId) {
-        try {
-            ev.preventDefault();
+        console.log("⬇️ DROP:", dragged, "→", newParentId);
 
-            // Guard: client-side only - admin-only drag/drop
-            if (typeof window.__isAdmin !== 'undefined' && !window.__isAdmin) {
-                alert("Only Admin can reassign via drag-and-drop.");
-                return;
-            }
-
-            const draggedId = ev.dataTransfer?.getData("text/plain") || __draggedUserId;
-            if (!draggedId) { console.warn("No dragged id"); return; }
-            if (!targetId) { console.warn("No target id"); return; }
-
-            // Avoid dropping onto same parent
-            if (draggedId === targetId) {
-                return;
-            }
-
-            const draggedEl = document.querySelector(`[data-id="${draggedId}"]`);
-            const targetEl = targetId === 'ADMIN' ? document.querySelector('.org-box.admin') : document.querySelector(`[data-id="${targetId}"]`);
-
-            const draggedName = draggedEl?.querySelector('.node-title')?.textContent?.trim() || draggedId;
-            const targetName = (targetId === 'ADMIN') ? 'Admin' : (targetEl?.querySelector('.node-title')?.textContent?.trim() || targetId);
-
-            const tokenEl = document.querySelector('input[name="__RequestVerificationToken"]');
-            const body = new URLSearchParams({ userId: draggedId, managerId: targetId });
-            if (tokenEl) body.append('__RequestVerificationToken', tokenEl.value);
-
-            const res = await fetch('/Users/Reassign', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: body.toString()
+        fetch('/Users/MoveOrgNode', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'RequestVerificationToken': getCsrfToken()
+            },
+            body: JSON.stringify({
+                userId: dragged.id,
+                newParentId: newParentId // "ADMIN" or managerId
+            })
+        })
+            .then(r => {
+                if (!r.ok) throw new Error("Move failed");
+                return r.json();
+            })
+            .then(res => {
+                if (res.success) {
+                    location.reload();
+                } else {
+                    alert('Move failed');
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert('Error while moving user');
             });
+    }
 
-            if (!res.ok) {
-                const txt = await res.text();
-                alert(txt || "Failed to reassign user");
-                return;
-            }
 
-            // Expect JSON message { message: "..." }
-            let data;
-            try { data = await res.json(); } catch (_) { data = null; }
 
-            // Show toast then reload
-            const msg = data && data.message ? data.message : `${draggedName} reassigned to ${targetName}.`;
-            showToast(msg, 'success', 2000);
 
-            setTimeout(() => {
-                location.reload();
-            }, 900);
-
-        } catch (ex) {
-            console.error("drop error", ex);
-            alert("Failed to drop/reassign user");
-        }
-    };
 
     // ---------------- Load reports ----------------
     window.loadReports = function (userId) {

@@ -8,11 +8,16 @@
 <div class="tree-node org-branch">
 
     <!-- ================= SUB MANAGER NODE ================= -->
-    <div class="org-box manager org-node clickable-node"
+    <div class="org-box manager org-node submanager"
          data-id="@Model.Id"
+         data-parent-id="@Model.ParentUserId"
          data-role="SubManager"
-         @(currentRole == "Admin" ? "draggable=\"true\" ondragstart=\"drag(event)\"" : "")
-         @(currentRole == "Admin" ? $"ondragover=\"allowDrop(event)\" ondrop=\"drop(event,'{Model.Id}')\"" : "")>          
+         draggable="true"
+         ondragstart="drag(event)"
+         ondragover="allowDrop(event)"
+         ondrop="drop(event,'@Model.Id')">
+
+
 
         <!-- ACTION ICONS (EDIT / DELETE / REPORTS) -->
         <div class="node-actions-top above-name">
@@ -64,8 +69,11 @@
                 {
                     <div class="org-box user org-node xsmall"
                          data-id="@user.Id"
+                         data-parent-id="@Model.Id"
                          data-role="User"
-                         @(currentRole == "Admin" ? "draggable=\"true\" ondragstart=\"drag(event)\"" : "")>
+                         draggable="true"
+                         ondragstart="drag(event)">
+
 
                         <!-- USER ACTION ICONS -->
                         <div class="node-actions-top above-name">

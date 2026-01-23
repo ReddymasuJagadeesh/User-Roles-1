@@ -16,12 +16,14 @@
                      ?? new List<Users>();
 
     var currentRole = (ViewBag.CurrentRole as string) ?? "User";
+
 }
 
 <script>
     // expose simple client-side flag used by orgchart.js
     window.__isAdmin = @(currentRole == "Admin" ? "true" : "false");
 </script>
+
 
 
 <div class="org-wrapper-full">
@@ -45,7 +47,7 @@
     }
 
     <!-- LINE DOWN FROM ADMIN -->
-    <div class="org-line"></div>
+    @* <div class="org-line"></div> *@
     <div class="org-layout-full">
 
         <!-- ================= LEFT PANEL : TREE ================= -->
@@ -54,25 +56,23 @@
             <!-- ================= ADMIN (show ONLY to Admin) ================= -->
             @if (currentRole == "Admin" && admin != null)
             {
-                <div class="org-admin">
-                    <div class="org-box admin"
-                         @(currentRole == "Admin" ? "ondragover=\"allowDrop(event)\" ondrop=\"drop(event,'ADMIN')\"" : "")>
-                        <div class="d-flex justify-content-between align-items-center">
+                <div class="org-admin"
+                     ondragover="allowDrop(event)"
+                     ondrop="drop(event,'ADMIN')">
 
+                    <div class="org-box admin">
+                        <div class="d-flex justify-content-between align-items-center">
                             <div>
                                 <strong>@admin?.Name</strong>
                                 <div class="role">Admin</div>
                             </div>
 
-                            <!-- ADD (admin only) — open modal in Admin context (managerId = ADMIN) -->
                             <a href="javascript:void(0)"
                                class="org-plus"
-                               onclick="openAddModal('', 'ADMIN')">
-                                +
-                            </a>
-
+                               onclick="openAddModal('', 'ADMIN')">+</a>
                         </div>
                     </div>
+
 
                     @* Admin-held users (users with ParentUserId == null) *@
                     @if (adminUsers != null && adminUsers.Any())
@@ -82,8 +82,13 @@
                             {
                                 <div class="org-box user org-node xsmall"
                                      data-id="@auser.Id"
+                                     data-parent-id="ADMIN"
                                      data-role="User"
-                                     @(currentRole == "Admin" ? "draggable=\"true\" ondragstart=\"drag(event)\"" : "")>
+                                     draggable="true"
+                                     @* onmousedown="prepareDrag(event)" *@
+                                     ondragstart="drag(event)">
+
+
 
                                     <div class="node-actions-top above-name">
                                         @if (currentRole == "Admin" || currentRole == "Manager")
@@ -119,8 +124,12 @@
                     <div class="org-box manager org-node"
                          data-id="@manager.Id"
                          data-role="Manager"
-                         @(currentRole == "Admin" ? "draggable=\"true\" ondragstart=\"drag(event)\"" : "")
-                         @(currentRole == "Admin" ? $"ondragover=\"allowDrop(event)\" ondrop=\"drop(event,'{manager.Id}')\"" : "")>
+                         draggable="true"
+                         @* onmousedown="prepareDrag(event)" *@
+                         ondragstart="drag(event)"
+                         ondragover="allowDrop(event)"
+                         ondrop="drop(event,'@manager.Id')">
+
 
                         @* ACTION ICONS: allow Admin and Manager to edit (delete Admin-only); reports available to both *@
                         <div class="node-actions-top above-name">
@@ -166,8 +175,13 @@
                             {
                                 <div class="org-box user org-node xsmall"
                                      data-id="@user.Id"
+                                     data-parent-id="@manager.Id"
                                      data-role="User"
-                                     @(currentRole == "Admin" ? "draggable=\"true\" ondragstart=\"drag(event)\"" : "")>
+                                     draggable="true"
+                                     @* onmousedown="prepareDrag(event)" *@
+                                     ondragstart="drag(event)">
+
+
 
                                     <!-- NODE ACTIONS: Admin + Manager can edit; delete still Admin only -->
                                     <div class="node-actions-top above-name">
