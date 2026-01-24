@@ -501,11 +501,9 @@ namespace UserRoles.Controllers
 
             // ✅ Always return JSON for inline/AJAX calls
             return RedirectToAction(
-            "OrgChart",
-            "Users",
+            "UserReports",
             new { userId = report.ApplicationUserId }
         );
-
 
         }
 

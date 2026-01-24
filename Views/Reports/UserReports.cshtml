@@ -72,120 +72,6 @@ else
     </div>
 }
 
-@* <!-- ================= ADD REPORT (FOR OTHERS) ================= -->
-@if (showAddReportForOthers)
-{
-    <div class="card mb-3 shadow-sm">
-        <div class="card-body py-3">
-            <h6 class="mb-3">➕ Add Report</h6>
-
-            <form asp-action="PickDateInline" method="post" class="row g-2 mb-3">
-                @Html.AntiForgeryToken()
-                <input type="hidden" name="userId" value="@targetUserId" />
-
-                <div class="col-md-4">
-                    <input type="date"
-                           name="selectedDate"
-                           class="form-control form-control-sm"
-                           max="@DateTime.Today.ToString("yyyy-MM-dd")"
-                           required />
-                </div>
-
-                <div class="col-md-3">
-                    <button class="btn btn-primary btn-sm w-100">
-                        Add Report
-                    </button>
-                </div>
-            </form>
-
-            @if (addDate != null)
-            {
-                <form asp-action="CreateInline"
-                      method="post"
-                      class="row g-3 align-items-end"
-                      onsubmit="return validateReportedTo(this);">
-
-                    @Html.AntiForgeryToken()
-
-                    <input type="hidden" name="targetUserId" value="@targetUserId" />
-                    <input type="hidden" name="date" value="@addDate" />
-
-                    <!-- Date -->
-                    <div class="col-md-2 fw-semibold">
-                        <label class="form-label">Date</label>
-                        <div>@addDate</div>
-                    </div>
-
-                    <!-- TASK -->
-                    <div class="col-md-3">
-                        <label class="form-label">Task</label>
-                        <textarea name="task"
-                          rows="2"
-                          maxlength="100"
-                          class="form-control form-control-sm fixed-textarea char-limit"
-                          data-counter="taskAdd"
-                          required></textarea>
-                        <small id="taskAdd" class="text-muted">
-                            100 characters remaining
-                        </small>
-                    </div>
-
-                    <!-- NOTE -->
-                    <div class="col-md-3">
-                        <label class="form-label">Note</label>
-                        <textarea name="note"
-                          rows="2"
-                          maxlength="100"
-                          class="form-control form-control-sm fixed-textarea char-limit"
-                          data-counter="noteAdd"
-                          required></textarea>
-                        <small id="noteAdd" class="text-muted">
-                            100 characters remaining
-                        </small>
-                    </div>
-
-                    <!-- REPORTED TO -->
-                    <div class="col-md-2">
-                        <label class="form-label">Reported To</label>
-
-                        <div class="form-check">
-                            <input class="form-check-input"
-                                   type="checkbox"
-                                   name="reportedTo"
-                                   value="Manager"
-                                   checked />
-                            <label class="form-check-label">Manager</label>
-                        </div>
-
-                        <div class="form-check">
-                            <input class="form-check-input"
-                                   type="checkbox"
-                                   name="reportedTo"
-                                   value="Admin" />
-                            <label class="form-check-label">Admin</label>
-                        </div>
-
-                        <!-- ERROR MESSAGE -->
-                        <div class="text-danger small mt-1 d-none reportedToError">
-                            Please select Admin or Manager.
-                        </div>
-                    </div>
-
-                    <!-- ACTIONS -->
-                    <div class="col-md-2 text-end">
-                        <button class="btn btn-success btn-sm">Submit</button>
-                         <a asp-action="UserReports"
-                           asp-route-userId="@targetUserId"
-                           class="btn btn-secondary btn-sm ms-1">
-                            Cancel
-                        </a> 
-                    </div>
-                </form>
-            }
-
-        </div>
-    </div>
-} *@
 
 <div class="d-flex justify-content-between align-items-center mb-2">
     <div class="mt-2 text-muted">
@@ -336,7 +222,10 @@ else
                         }
                         else
                         {
-                            <div class="report-text">@r.Task</div>
+                            <div class="report-text" id="task-text-@r.Id">@r.Task</div>
+                            <textarea class="form-control d-none"
+                              id="task-input-@r.Id">@r.Task</textarea>
+
                         }
                     </td>
 
@@ -356,7 +245,10 @@ else
                         }
                         else
                         {
-                            <div class="report-text">@r.Note</div>
+                            <div class="report-text" id="note-text-@r.Id">@r.Note</div>
+                            <textarea class="form-control d-none"
+                              id="note-input-@r.Id">@r.Note</textarea>
+
                         }
                     </td>
 
@@ -376,7 +268,10 @@ else
                         }
                         else
                         {
-                            <div class="report-text">@r.ReviewerComment</div>
+                            <div class="report-text" id="comment-text-@r.Id">@r.ReviewerComment</div>
+                            <textarea class="form-control d-none"
+                              id="comment-input-@r.Id">@r.ReviewerComment</textarea>
+
                         }
                     </td>
 
@@ -408,15 +303,13 @@ else
                                             r.SubmittedByRole == "User")
                                             )
                         {
-                            <a asp-action="UserReports"
-                               asp-route-userId="@targetUserId"
-                               asp-route-editId="@r.Id"
-                               asp-route-page="@Model.Page"
-                               asp-route-pageSize="@Model.PageSize"
-                               class="btn btn-sm btn-outline-warning ms-1"
-                               title="Edit">
+                            <button type="button"
+                                    class="btn btn-sm btn-outline-warning ms-1"
+                                    title="Edit"
+                                    onclick="enableInlineEdit(@r.Id)">
                                 <i class="bi bi-pencil"></i>
-                            </a>
+                            </button>
+
                         }
 
                         <!-- 🗑 DELETE : ADMIN ONLY -->
@@ -467,6 +360,17 @@ else
 }
 
 @section Scripts {
+
+    <script>
+        // Auto-dismiss alerts
+        document.querySelectorAll('.auto-dismiss').forEach(alert => {
+            const timeout = parseInt(alert.dataset.timeout || 5000);
+            setTimeout(() => {
+                alert.classList.add('fade');
+                setTimeout(() => alert.remove(), 800);
+            }, timeout);
+        });
+    </script>
     <script>
         // Existing function - keep it
         function validateReportedTo(form) {

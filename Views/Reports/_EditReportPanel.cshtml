@@ -1,128 +1,195 @@
 ﻿@* admin manager edit report panel of user reports *@
 @model UserRoles.ViewModels.ReportViewModel
+@using System.Security.Claims
+@{
+    // ✅ FIXED: Get user ID from claims
+    var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+    var currentUserIdValue = userIdClaim?.Value ?? "";
+    var isAdmin = User.IsInRole("Admin");
+    var isManager = User.IsInRole("Manager");
+    var isSubManager = User.IsInRole("SubManager");
+}
 
 <div class="card shadow-sm">
     <div class="card-body">
 
         <h6 class="mb-3">✏️ Edit Report</h6>
 
-        <form asp-action="InlineUpdate"
-              asp-controller="Reports"
-              method="post"
-              class="inline-edit-form">
+        <!-- ✅ Add role-based warning -->
+        @if (isManager && Model.SubmittedByRole == "Admin")
+        {
+            <div class="alert alert-danger mb-3">
+                <i class="bi bi-exclamation-triangle"></i>
+                Warning: Managers cannot edit Admin reports.
+            </div>
+        }
+        else if (isSubManager && Model.SubmittedByRole != "User")
+        {
+            <div class="alert alert-danger mb-3">
+                <i class="bi bi-exclamation-triangle"></i>
+                Warning: SubManagers can only edit User reports.
+            </div>
+        }
 
-
+        <form id="editReportForm">
             @Html.AntiForgeryToken()
 
-            <!-- REQUIRED -->
-            <input type="hidden" name="Id" value="@Model.Id" />
+            <input type="hidden" id="editReportId" value="@Model.Id" />
+            <input type="hidden" id="reportOwnerId" value="@Model.ApplicationUserId" />
+            <input type="hidden" id="submittedByRole" value="@Model.SubmittedByRole" />
 
             <div class="mb-3">
                 <label class="form-label">Task</label>
-                <textarea name="Task"
-                          class="form-control"
+                <textarea class="form-control"
+                          id="editTask"
+                          rows="2"
+                          maxlength="100"
                           required>@Model.Task</textarea>
             </div>
 
             <div class="mb-3">
                 <label class="form-label">Note</label>
-                <textarea name="Note"
-                          class="form-control"
+                <textarea class="form-control"
+                          id="editNote"
+                          rows="3"
+                          maxlength="100"
                           required>@Model.Note</textarea>
             </div>
 
             <div class="mb-3">
                 <label class="form-label">Reviewer Comment</label>
-                <textarea name="ReviewerComment"
-                          class="form-control">@Model.ReviewerComment</textarea>
+                <textarea class="form-control"
+                          id="editReviewerComment"
+                          rows="2"
+                          maxlength="100">@Model.ReviewerComment</textarea>
             </div>
 
-            <button type="submit" class="btn btn-primary">Update</button>
-            <button type="button"
-                    class="btn btn-secondary"
-                    onclick="loadReports('@Model.ApplicationUserId')">
-                Cancel
-            </button>
-        </form>
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary" id="updateBtn">
+                    Update
+                </button>
 
+                <button type="button"
+                        class="btn btn-secondary"
+                        onclick="cancelEdit()">
+                    Cancel
+                </button>
+            </div>
+
+        </form>
     </div>
 </div>
 
 <script>
-    // server-side role exposed to JS as boolean
+    const targetUserId = "@(ViewBag.TargetUserId ?? Model.ApplicationUserId)";
+    const currentUserId = "@currentUserIdValue"; // ✅ Use the value from server-side
+    const reportOwnerId = "@Model.ApplicationUserId";
+    const submittedByRole = "@Model.SubmittedByRole";
     const isAdmin = @User.IsInRole("Admin").ToString().ToLower();
+    const isManager = @User.IsInRole("Manager").ToString().ToLower();
+    const isSubManager = @User.IsInRole("SubManager").ToString().ToLower();
 
-    // Fallback cancel: if admin, go back to OrgChart where edit was likely initiated;
-    // otherwise reload reports panel for the same user
+    // Client-side validation based on role
+    function validateEditPermission() {
+        if (isAdmin) return true; // Admin can edit anything
+
+        if (isManager) {
+            // Manager cannot edit Admin or other Manager reports
+            if (submittedByRole === "Admin") {
+                alert("Manager cannot edit Admin reports.");
+                return false;
+            }
+            if (submittedByRole === "Manager" && reportOwnerId !== currentUserId) {
+                alert("Manager cannot edit other Manager reports.");
+                return false;
+            }
+        }
+
+        if (isSubManager) {
+            // SubManager can only edit User reports
+            if (submittedByRole !== "User") {
+                alert("SubManager can only edit User reports.");
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     function cancelEdit() {
-        const userId = "@(ViewBag.TargetUserId ?? "")";
-        if (isAdmin) {
-            // redirect admin back to org chart
-            window.location.href = '/Users/OrgChart';
-            return;
+        if (targetUserId && typeof loadReports === "function") {
+            loadReports(targetUserId);
+        } else {
+            const panel = document.getElementById("detailsPanel");
+            if (panel) panel.innerHTML = "";
         }
-
-        if (userId && typeof loadReports === "function") {
-            loadReports(userId);
-            return;
-        }
-        // otherwise clear details panel
-        const panel = document.getElementById("detailsPanel");
-        if (panel) panel.innerHTML = "";
     }
 
     document.getElementById("editReportForm").addEventListener("submit", async function (e) {
         e.preventDefault();
 
-        const id = document.getElementById("editReportId").value;
-        const task = document.getElementById("editTask").value;
-        const note = document.getElementById("editNote").value;
-        const reviewerComment = document.getElementById("editReviewerComment").value;
-
-        const response = await fetch("/Reports/InlineUpdate", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/x-www-form-urlencoded"
-            },
-            body: new URLSearchParams({
-                id: id,
-                task: task,
-                note: note,
-                reviewerComment: reviewerComment
-            }),
-            credentials: "same-origin"
-        });
-
-        if (!response.ok) {
-            alert(await response.text());
+        // Client-side permission check
+        if (!validateEditPermission()) {
             return;
         }
 
-        // Update table row in-place if present
+        const id = document.getElementById("editReportId").value;
+        const task = document.getElementById("editTask").value.trim();
+        const note = document.getElementById("editNote").value.trim();
+        const reviewerComment = document.getElementById("editReviewerComment").value.trim();
+
+        if (!task || !note) {
+            alert("Task and Note are required.");
+            return;
+        }
+
+        const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+        const updateBtn = document.getElementById("updateBtn");
+        const originalText = updateBtn.innerHTML;
+        updateBtn.disabled = true;
+        updateBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Updating...';
+
         try {
-            const row = document.getElementById('report-row-' + id);
-            if (row) {
-                const textCells = row.querySelectorAll('.report-text');
-                if (textCells && textCells.length >= 2) {
-                    textCells[0].textContent = task;
-                    textCells[1].textContent = note;
-                }
+            const response = await fetch("/Reports/InlineUpdate", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded"
+                },
+                body: new URLSearchParams({
+                    id: id,
+                    task: task,
+                    note: note,
+                    reviewerComment: reviewerComment,
+                    __RequestVerificationToken: token
+                })
+            });
 
-                const reviewCell = row.querySelector('.col-review');
-                if (reviewCell) {
-                    reviewCell.textContent = reviewerComment && reviewerComment.trim() !== '' ? reviewerComment : '—';
+            if (response.ok) {
+                const data = await response.json();
+
+                if (data.success) {
+                    alert(data.message || "Report updated successfully");
+
+                    if (targetUserId && typeof loadReports === "function") {
+                        loadReports(targetUserId);
+                    } else {
+                        window.location.reload();
+                    }
+                } else {
+                    alert(data.message || "Update failed");
                 }
+            } else if (response.status === 403) {
+                const errorText = await response.text();
+                alert(errorText || "You don't have permission to edit this report.");
+            } else {
+                const errorText = await response.text();
+                alert(errorText || "Failed to update report");
             }
-        } catch (err) {
-            // ignore DOM update errors
-            console.error(err);
+        } catch (error) {
+            alert("Network error. Please try again.");
+        } finally {
+            updateBtn.disabled = false;
+            updateBtn.innerHTML = originalText;
         }
-
-        // Call loadReports to ensure panel and pagination stay consistent
-        const userId = "@(ViewBag.TargetUserId ?? "")";
-        if (userId && typeof loadReports === "function") {
-            loadReports(userId);
-        }
-
     });
 </script>

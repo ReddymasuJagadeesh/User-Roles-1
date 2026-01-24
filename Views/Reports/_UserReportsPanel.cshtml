@@ -137,7 +137,7 @@
                     bool canEdit =
                     User.IsInRole("Admin") ||
                     (User.IsInRole("Manager") &&
-                    r.SubmittedByRole == "User") ||
+                    (r.SubmittedByRole == "User" || r.SubmittedByRole == "SubManager")) || r.SubmittedByRole == "Admin" || (User.IsInRole("Manager")) ||
                     (User.IsInRole("SubManager") &&
                     r.SubmittedByRole == "User");
 
