@@ -70,7 +70,7 @@ if (!app.Environment.IsDevelopment())
 
 app.UseStatusCodePagesWithReExecute("/Home/Error/{0}");
 
-app.UseHttpsRedirection();
+//app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
@@ -85,7 +85,7 @@ app.MapControllerRoute(
     pattern: "{controller=Home}/{action=RedirectByRole}/{id?}");
 
 
-app.Urls.Add("http://+:8080");
+//app.Urls.Add("http://+:8080");
 
 
 app.Run();

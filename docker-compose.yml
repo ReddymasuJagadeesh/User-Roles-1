@@ -2,6 +2,7 @@ version: "3.9"
 
 services:
   postgres:
+
     image: postgres:16
     container_name: postgres
     restart: always
@@ -20,6 +21,7 @@ services:
       retries: 10
 
   userroles:
+    build: .
     image: userroles-dotnet10
     container_name: userroles
     restart: always
