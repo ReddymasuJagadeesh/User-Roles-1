@@ -78,27 +78,27 @@
                                     Reports
                                 </a>
                             </li>
-                        }
+                        } 
 
-                        @if (User.IsInRole("Admin") || User.IsInRole("Manager"))
+                        @* @if (User.IsInRole("Admin") || User.IsInRole("Manager"))
                         {
                             <li class="nav-item">
                                 <a class="nav-link" asp-controller="Tasks" asp-action="Create">
                                     Assign Tasks
                                 </a>
                             </li>
-                        }
+                        } *@
 
                         
 
-                        @if (User.IsInRole("User") || User.IsInRole("Manager") || User.IsInRole("SubManager"))
+                        @* @if (User.IsInRole("User") || User.IsInRole("Manager") || User.IsInRole("SubManager"))
                         {
                             <li class="nav-item">
                                 <a class="nav-link" asp-controller="Tasks" asp-action="Index">
                                    view  Tasks
                                 </a>
                             </li>
-                        }
+                        } *@
 
                     </ul>
 

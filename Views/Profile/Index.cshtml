@@ -6,10 +6,10 @@
 
 <div class="row justify-content-center">
     <div class="col-md-6">
-
         <div class="card shadow-sm">
+
             <div class="card-header bg-primary text-white">
-                <h5 class="mb-0">👤 My Profile</h5>
+                <h5 class="mb-0">My Profile</h5>
             </div>
 
             <div class="card-body">
@@ -35,6 +35,7 @@
                         <dd class="col-sm-8">@Model.MobileNumber</dd>
                     </dl>
 
+                    <!-- 🔑 EDIT BUTTON (GET) -->
                     <a asp-action="Edit" class="btn btn-primary">
                         Edit Profile
                     </a>
@@ -45,6 +46,10 @@
                     <form asp-action="Save" method="post">
                         @Html.AntiForgeryToken()
 
+                        <!-- 🔑 PRESERVE EDIT MODE -->
+                        <input type="hidden" asp-for="IsEditMode" />
+                        <input type="hidden" asp-for="CanEditEmail" />
+
                         <div class="mb-3">
                             <label asp-for="FirstName" class="form-label"></label>
                             <input asp-for="FirstName" class="form-control" />
@@ -53,7 +58,20 @@
 
                         <div class="mb-3">
                             <label asp-for="Email" class="form-label"></label>
-                            <input asp-for="Email" class="form-control" readonly />
+
+                            @if (Model.CanEditEmail)
+                            {
+                                <!-- 🔐 ADMIN CAN EDIT EMAIL -->
+                                <input asp-for="Email" class="form-control" />
+                                <small class="text-muted">
+                                    Changing email will send a new login code.
+                                </small>
+                            }
+                            else
+                            {
+                                <!-- 👤 USER / MANAGER READONLY -->
+                                <input asp-for="Email" class="form-control" readonly />
+                            }
                         </div>
 
                         <div class="mb-3">

@@ -1,0 +1,21 @@
+﻿@{
+    ViewData["Title"] = "Confirm New Email";
+}
+
+<h3>Confirm New Email</h3>
+
+<form method="post">
+    @Html.AntiForgeryToken()
+
+    <div class="mb-3">
+        <label>New Email</label>
+        <input name="email" class="form-control" required />
+    </div>
+
+    <div class="mb-3">
+        <label>Login Code</label>
+        <input name="code" class="form-control" required />
+    </div>
+
+    <button class="btn btn-primary">Confirm & Login</button>
+</form>

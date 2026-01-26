@@ -91,6 +91,48 @@ namespace UserRoles.Controllers
         /* ===================== PASSWORD RESET ===================== */
 
         [HttpGet]
+        public IActionResult LoginByCode()
+        {
+            return View();
+        }
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> LoginByCode(string email, string code)
+        {
+            // 1️⃣ Find user by pending email
+            var user = userManager.Users
+                .FirstOrDefault(u => u.PendingEmail == email.Trim());
+
+            if (user == null ||
+                user.EmailChangeLoginCode != code ||
+                user.EmailChangeCodeExpiry < DateTime.UtcNow)
+            {
+                ModelState.AddModelError("", "Invalid or expired login code.");
+                return View();
+            }
+
+            // 2️⃣ Commit email change (NOW it becomes permanent)
+            user.Email = user.PendingEmail;
+            user.UserName = user.PendingEmail;
+
+            // 3️⃣ Clear pending data
+            user.PendingEmail = null;
+            user.EmailChangeLoginCode = null;
+            user.EmailChangeCodeExpiry = null;
+
+            // 4️⃣ Invalidate all old sessions (SECURITY)
+            user.SecurityStamp = Guid.NewGuid().ToString();
+
+            await userManager.UpdateAsync(user);
+
+            // 5️⃣ Sign in with NEW email
+            await signInManager.SignInAsync(user, isPersistent: false);
+
+            return RedirectToAction("OrgChart", "Users");
+        }
+
+
+        [HttpGet]
         public IActionResult VerifyEmail()
         {
             return View();

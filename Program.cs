@@ -39,6 +39,9 @@ builder.Services.Configure<EmailSettings>(
 
 builder.Services.AddTransient<IEmailService, EmailService>();
 
+// ================= EMAIL SERVICE =================
+builder.Services.AddScoped<IEmailService, EmailService>();
+
 // ================= COOKIE =================
 builder.Services.ConfigureApplicationCookie(options =>
 {
@@ -80,5 +83,9 @@ app.UseAuthorization();
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=RedirectByRole}/{id?}");
+
+
+app.Urls.Add("http://+:8080");
+
 
 app.Run();
