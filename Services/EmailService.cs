@@ -17,7 +17,7 @@ namespace UserRoles.Services
             var from = _configuration["EmailSettings:From"];
             var smtpServer = _configuration["EmailSettings:SmtpServer"];
             var port = int.Parse(_configuration["EmailSettings:Port"]!);
-            var username = _configuration["EmailSettings:Username"];
+            var username = _configuration["EmailSettings:UserName"];   // ✅ FIXED
             var password = _configuration["EmailSettings:Password"];
 
             var mailMessage = new MailMessage
@@ -25,7 +25,7 @@ namespace UserRoles.Services
                 From = new MailAddress(from!),
                 Subject = subject,
                 Body = message,
-                IsBodyHtml = true
+                IsBodyHtml = false
             };
 
             mailMessage.To.Add(toEmail);
@@ -33,10 +33,19 @@ namespace UserRoles.Services
             using var client = new SmtpClient(smtpServer, port)
             {
                 Credentials = new NetworkCredential(username, password),
-                EnableSsl = true
+                EnableSsl = true,
+                UseDefaultCredentials = false   // ✅ FIXED
             };
 
-            await client.SendMailAsync(mailMessage);
+            try
+            {
+                await client.SendMailAsync(mailMessage);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"SMTP FAILED: {ex}");
+                throw;
+            }
         }
     }
 }
