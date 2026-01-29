@@ -18,6 +18,9 @@ System.Net.ServicePointManager.SecurityProtocol =
 
 
 // ================= MVC =================
+
+
+
 builder.Services.AddControllersWithViews();
 
 // ================= DATABASE =================
